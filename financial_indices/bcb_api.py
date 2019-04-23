@@ -204,6 +204,25 @@ class FinancialIndicesApi:
             else:
                 self._indices_records[indices_code] = []
 
+    def _get_latest_date(self, indices_code: int) -> Optional[datetime.date]:
+        """ Return the date of the latest IndicesRecord record from
+        self._indices_records[indices_code].
+
+        Return None if self doesn't have records for the indices_code or
+        if there is no record.
+
+        :param indices_code: Integer representing a financial indices.
+        :return: The last available date of the indices_code, or None
+            if it can't be retrieved.
+        """
+
+        try:
+            record = self._indices_records[indices_code][-1]
+        except (KeyError, IndexError):
+            return None
+        else:
+            return record.date
+
     def set_indices_records(self, cod_start_date_: COD_DATE) -> None:
         """ Stores/update the value of self._indices_records with the
         json result (formatted with IndicesRecord) of a query made to
