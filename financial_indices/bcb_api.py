@@ -15,7 +15,7 @@ from typing import (Dict,
 # Type aliases
 DAY_RECORD = Tuple[Union[datetime.date, float]]
 RECORDS = Union[Sequence[DAY_RECORD], Sequence]
-COD_DATE = Optional[Mapping[int, Optional[datetime.date]]]
+COD_DATE = Mapping[int, Tuple[Optional[datetime.date]]]
 INDICES_DATE_VALUES = Dict[int, RECORDS]
 RAW_JSON = Union[List[Dict[str, str]], List]
 
@@ -53,13 +53,13 @@ class IndicesRecord:
 
 
 class FinancialIndicesApi:
-    """ Dict like class, capable of accessing, retrieving, storing and
-    updating financial indices data from Brazil Central Bank (BCB) API.
+    """ Dict like class, responsible for accessing, retrieving and storing
+    financial indices data from Brazil Central Bank (BCB) API.
 
-    Indices data are stored in private instance field '_indices_records'.
+    Indices data are stored in private instance field '_indices_records', as
+    a dict.
 
-    The '_indices_records' may be filled when instantiating the class, or
-    by calling the method 'set_indices_records()', with the desired parameter.
+    '_indices_records' is filled by calling the method 'set_indices_records'.
     """
 
     _api_url: str = ('http://api.bcb.gov.br/dados/serie/bcdata.sgs.{'
@@ -67,21 +67,10 @@ class FinancialIndicesApi:
                      'dataInicial}&dataFinal={dataFinal}')
 
     def __init__(self, cod_start_date: COD_DATE = None) -> None:
-        """ Initialize instance of FinancialIndicesApi.
+        """ Initialize instance of FinancialIndicesApi."""
 
-        :param cod_start_date: Mapping of integer as keys, representing the
-            financial indices, and a date as value, representing the initial
-            date.
-            If key and value are valid, the instance will retrieve that
-                indices (key) records starting from the date given.
-            If key is valid but it's value is None, this instance will retrieve
-                that indices from the first date available on the API.
-            If None, initializes instance with no indices records.
-        """
-        self._arguments: COD_DATE = cod_start_date
-
+        self._arguments = {}
         self._indices_records: INDICES_DATE_VALUES = {}
-        self.set_indices_records(cod_start_date)
 
     def __repr__(self) -> str:
         return ('{}({})'
@@ -244,42 +233,34 @@ class FinancialIndicesApi:
         else:
             return record.date
 
-    def set_indices_records(self, cod_start_date_: COD_DATE) -> None:
+    def set_indices_records(self, cod_start_date: COD_DATE) -> None:
         """ Stores/update the value of self._indices_records with the
         json result (formatted with IndicesRecord) of a query made to
         the API.
 
-        :param cod_start_date_: Mapping of integer as keys, representing the
-            financial indices, and a date as value, representing the initial
-            date.
-            If key and value are valid, the instance will retrieve that
-                indices (key) records starting from the date given.
-            If key is valid but it's value is None, this instance will retrieve
-                that indices from the first date available on the API.
-            If None, initializes instance with no indices records.
+        :param cod_start_date: Mapping of integer as keys, representing the
+            financial indices, and a tuple of dates as values, representing the
+            start and end date.
+            If Both dates are valid, the instance will retrieve that indices
+                (key) records respecting the dates range.
+            If start_date (first date) if None, the result will include records
+                from the first available date of that indices up to the end_data
+                given.
+            If end_date (second date) is None, the result will query all records
+                from start_date up to datetime.date.today().
+            If both dates are None, all available records from the indices are
+                retrieved.
         """
 
-        if cod_start_date_ is None:
+        if cod_start_date is None:
             return
 
-        self._arguments.update(cod_start_date_)
+        self._arguments.update(cod_start_date)
 
-        for cod, date in cod_start_date_.items():
-            url = self._create_api_url(cod, date)
+        for cod, dates in cod_start_date.items():
+            url = self._create_api_url(cod, *dates)
             json_response = self._get_json_results(url)
             indices_records = self._fix_api_results(json_response)
 
-            self._indices_records[cod] = indices_records
-
-        self._rm_records_outside_range()
-
-
-if __name__ == '__main__':
-    logging.basicConfig(level=logging.DEBUG)
-    logger = logging.getLogger(__name__)
-
-    scraper = FinancialIndicesApi({433: datetime.date(2019, 1, 29),
-                                   12: datetime.date(2019, 4, 5)})
-
-    import pprint
-    pprint.pprint(scraper._indices_records)
+            self._indices_records[cod] = self._rm_records_outside_range(*dates,
+                                                                        indices_records)
