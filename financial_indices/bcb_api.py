@@ -143,7 +143,7 @@ class FinancialIndicesApi:
         occurred.
 
         :param api_url: String of the url that is requested.
-        :return: Response of the requests.
+        :return: Response of the request.
         :raise: requests.HTTPError.
         """
 
@@ -159,8 +159,7 @@ class FinancialIndicesApi:
 
         return response.json()
 
-    def _fix_json_types(self, json_result: RAW_JSON
-                        ) -> RECORDS:
+    def _fix_api_results(self, json_result: RAW_JSON) -> RECORDS:
         """ Each element from json_result (dict) is converted to an
         IndicesRecord object, with string values converted to either float
         or datetime.date objects.
@@ -175,8 +174,8 @@ class FinancialIndicesApi:
 
         values = []
         for dictionary in json_result:
-            # Every api result dict should always have a 'valor' key, and
-            # it's always a float.
+            # Every api result dict should always have a 'valor' key, and it's
+            # always a float.
             day_record_dict = {
                 'valor': float(dictionary.pop('valor')),
             }
@@ -258,7 +257,7 @@ class FinancialIndicesApi:
         for cod, date in cod_start_date_.items():
             url = self._create_api_url(cod, date)
             json_response = self._get_json_results(url)
-            indices_records = self._fix_json_types(json_response)
+            indices_records = self._fix_api_results(json_response)
 
             self._indices_records[cod] = indices_records
 
