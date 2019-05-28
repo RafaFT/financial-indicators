@@ -190,30 +190,40 @@ class FinancialIndicesApi:
 
         return values
 
-    def _remove_wrong_records(self) -> None:
-        """ Remove all IndicesRecord's from self._indices_records values
-        whose date is either equal or lower than the date in the corresponding
-        self._arguments.
+    def _rm_records_outside_range(self, start_date: Optional[datetime.date],
+                                  end_date: Optional[datetime.date],
+                                  records_array: RECORDS) -> RECORDS:
+        """ Return a new array with all records from records_array, whose date
+        are either lower than the start_date, or higher than the end_date,
+        removed.
 
-        :return: None
+        :param start_date: Initial date.
+        :param end_date: Final date.
+        :param records_array: Sequence of DAY_RECORDS.
+        :return: New sequence of DAY_RECORDS.
         """
+
+        new_records_array = []
 
         # The BCB's API result may have (oddly) instances whose date is
         # actually lower than the initial date provided to the api url
         # (parameter 'dataInicial').
-        for indices_code in self._indices_records:
-            requested_date = self._arguments[indices_code]
-            # requested_date may be None if the query wanted all records of
-            # a financial indices (see set_indices_records() or __init__()).
-            if requested_date is None:
-                continue
-            for index, record in enumerate(self._indices_records[indices_code]):
-                if record.date > requested_date:
-                    self._indices_records[indices_code] = (
-                        self._indices_records[indices_code][index:])
+        if isinstance(start_date, datetime.date):
+            for index_, record in enumerate(records_array, 0):
+                if record.date >= start_date:
+                    new_records_array.extend(records_array[index_:])
                     break
-            else:
-                self._indices_records[indices_code] = []
+        else:
+            new_records_array = records_array[:]
+
+        if isinstance(end_date, datetime.date):
+            for record in new_records_array[::-1]:
+                if record.date > end_date:
+                    new_records_array.pop()
+                else:
+                    break
+
+        return new_records_array
 
     def _get_latest_date(self, indices_code: int) -> Optional[datetime.date]:
         """ Return the date of the latest IndicesRecord record from
@@ -261,7 +271,7 @@ class FinancialIndicesApi:
 
             self._indices_records[cod] = indices_records
 
-        self._remove_wrong_records()
+        self._rm_records_outside_range()
 
 
 if __name__ == '__main__':
