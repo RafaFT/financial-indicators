@@ -103,27 +103,39 @@ class FinancialIndicesApi:
         return getattr(self._indices_records, item)
 
     def _create_api_url(self, api_code: int,
-                        start_date: Optional[datetime.date] = None) -> str:
-        """ Return a new '_api_url' that queries for the indices
-        equal to the api_code, starting from the start_date.
+                        start_date: Optional[datetime.date] = None,
+                        end_date: Optional[datetime.date] = None) -> str:
+        """ Constructs the query api url, from self.__class__._api_url, by
+        replacing the parameters 'codigo_serie', 'dataInicial' and 'dataFinal'
+        with api_code, start_date and end_date, respectively.
 
-        If start_date is None, the search begins from the first available
-        date for that api_code.
+        If end_date would be None, it's replaced by the value of today, instead.
 
-        dataFinal parameter from the _api_url is always equal to
-        datetime.date.today().date().
+        OBS: The api will actually query all results from the database, if any
+        of the dates are invalid (None values or swapped dates, as example).
+        The reason end_date receives a value when empty, is to possibly limit
+        the query in case start_date was provided.
 
         :param api_code: Integer representing a financial indices.
         :param start_date: The initial date to query for the financial records.
+        :param end_date: The last date to query.
         :return: String to be used in a query to the API.
         """
 
-        if start_date is not None:
+        if end_date is None:
+            end_date = datetime.date.today()
+
+        if isinstance(start_date, datetime.date):
+            if start_date > end_date:
+                raise ValueError('start_date can\'t be higher than the end_date.')
+
             start_date = start_date.strftime('%d/%m/%Y')
+
+        end_date = end_date.strftime('%d/%m/%Y')
 
         return self.__class__._api_url.format(codigo_serie=api_code,
                                               dataInicial=start_date,
-                                              dataFinal=TODAY,
+                                              dataFinal=end_date,
                                               )
 
     def _get_json_results(self, api_url: str) -> RAW_JSON:
