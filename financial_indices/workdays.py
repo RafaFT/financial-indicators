@@ -15,15 +15,15 @@ logger = logging.getLogger()
 
 
 class Workdays:
-    """ CLass containing all Brazilian workdays from 2012 to 2078, both
+    """ CLass containing all Brazilian workdays from 2001 to 2078, both
     included.
 
     Responsible for generating and returning a tuple with extra workdays,
     based on a date and a number of extra days.
     """
 
-    # Total number of workdays in Brazil from 2012 to 2078.
-    _number_workdays = 16824
+    # Total number of workdays in Brazil from 2001 to 2078.
+    _number_workdays = 19_593
     _filename = 'workdays.csv'
 
     def __init__(self, workdays_path: Optional[str] = None) -> None:
@@ -131,7 +131,7 @@ class Workdays:
             date_index = self.binary_search(self._workdays, start_date)
         except LookupError:
             logger.exception(f'{start_date} is not a valid workday between '
-                             f'2012 and 2078')
+                             f'2001 and 2078')
             raise LookupError
 
         first_index = date_index + 1
