@@ -31,8 +31,8 @@ class TestWorkdaysField(unittest.TestCase):
         self.assertTrue(isinstance(self.expander._workdays, Workdays))
 
     def test_workdays_length(self):
-        """ The _workdays field should have 16824 items."""
-        expected = 16_824
+        """ The _workdays field should have 19593 items."""
+        expected = 19_593
         actual = len(self.expander._workdays)
 
         self.assertEqual(expected, actual)
@@ -157,7 +157,7 @@ class TestDailyWorkdayIndicesExpander(unittest.TestCase):
         workday date from self._workdays, a LookupError should be raised.
         """
         input_ = [
-            self.indices_record(date=datetime.date(2078, 12, 26), value=0.0),
+            self.indices_record(date=datetime.date(2079, 12, 28), value=0.0),
         ]
         with self.assertRaises(LookupError):
             self.expander._daily_workday_indices_expander(input_)
@@ -171,7 +171,7 @@ class TestDailyWorkdayIndicesExpander(unittest.TestCase):
             # First record is outside range
             self.indices_record(date=datetime.date(2000, 12, 29), value=0.058366),
             # Second record is inside range
-            self.indices_record(date=datetime.date(2000, 1, 2), value=0.058400),
+            self.indices_record(date=datetime.date(2001, 1, 2), value=0.058400),
         ]
         output = self.expander._daily_workday_indices_expander(input_)
         expected = 32
@@ -185,7 +185,7 @@ class TestDailyWorkdayIndicesExpander(unittest.TestCase):
         self._workdays.
         """
         input_ = [
-            self.indices_record(date=datetime.date(2078, 12, 23), value=0.0),
+            self.indices_record(date=datetime.date(2078, 12, 30), value=0.0),
         ]
         output = self.expander._daily_workday_indices_expander(input_)
         expected = 1
