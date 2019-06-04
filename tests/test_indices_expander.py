@@ -405,7 +405,100 @@ class TestDailyThreeFieldIndicesExpander(unittest.TestCase):
 
 
 class TestIpcaFrom15Expander(unittest.TestCase):
-    pass
+    """ Class to test the method _ipca_from_15_expander().
+
+    This method should receive a sequence of namedtuple (IndicesRecord)
+    and return that sequence expanded with one extra namedtuple, corresponding
+    to the next month ipca, from ipca-15.
+    """
+
+    def setUp(self) -> None:
+        """ Instantiate IndicesExpander for each test."""
+        self.expander = IndicesExpander()
+        self.indices_record = namedtuple('IndicesRecord',
+                                         ('date', 'value'))
+
+    def test_empty_input(self):
+        """ An empty list should be returned when an empty list is given."""
+        expected = []
+        actual = self.expander._ipca_from_15_expander([])
+
+        self.assertEqual(expected, actual)
+
+    def test_one_item_input(self):
+        """ Test to make sure the return has 30 more items."""
+        input_ = [
+            self.indices_record(date=datetime.date(1984, 2, 1), value=9.50),
+        ]
+        expected = 2
+        actual = len(self.expander._ipca_from_15_expander(input_))
+
+        self.assertEqual(expected, actual)
+
+    def test_initial_records_are_preserved(self):
+        """ Test to ensure that the input records are part of, and in the same
+        indexes as before, in the result output.
+        """
+        input_ = [
+            self.indices_record(date=datetime.date(1998, 5, 1), value=0.50),
+            self.indices_record(date=datetime.date(1998, 6, 1), value=0.02),
+            self.indices_record(date=datetime.date(1998, 7, 1), value=-0.12),
+        ]
+        records = self.expander._ipca_from_15_expander(input_)
+
+        same_date_values = [record.date == records[index_].date and
+                            record.value == records[index_].value
+                            for index_, record in enumerate(input_)]
+
+        self.assertTrue(all(same_date_values))
+
+    def test_new_items_have_increasing_dates(self):
+        """ Test to make sure that the new record has a higher date than the last
+        record from the input.
+        """
+        input_ = [
+            self.indices_record(date=datetime.date(2004, 11, 1), value=0.69),
+            self.indices_record(date=datetime.date(2004, 12, 1), value=0.86),
+            self.indices_record(date=datetime.date(2005, 1, 1), value=0.58),
+        ]
+        records = self.expander._ipca_from_15_expander(input_)
+
+        self.assertTrue(records[-1].date > input_[-1].date)
+
+    def test_output_day(self):
+        """ The day of the new record must always be equal to 1."""
+        input_ = [
+            self.indices_record(date=datetime.date(2011, 1, 1), value=0.83),
+            self.indices_record(date=datetime.date(2011, 2, 1), value=0.80),
+        ]
+        output = self.expander._ipca_from_15_expander(input_)
+
+        self.assertEqual(output[-1].date.day, 1)
+
+    def test_outside_bottom_range(self):
+        """ If the last date of the input cannot be properly completed by the
+        first available date for the indices ipca-15, a ValueError should be
+        raised.
+
+        The first record for ipca-15 is datetime.date(2000, 5, 1).
+        """
+        input_ = [
+            self.indices_record(date=datetime.date(2000, 3, 1), value=0.22),
+        ]
+        with self.assertRaises(ValueError):
+            self.expander._ipca_from_15_expander(input_)
+
+    def test_outside_top_range(self):
+        """ If the last date of the input is newer than the ipca-15 date could
+        possibly be, a ValueError is raised.
+        """
+        today = datetime.date.today()
+        month_ahead = today + datetime.timedelta(31)
+        input_ = [
+            self.indices_record(date=month_ahead, value=0.0),
+        ]
+        with self.assertRaises(ValueError):
+            self.expander._ipca_from_15_expander(input_)
 
 
 if __name__ == '__main__':
