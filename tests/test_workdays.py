@@ -35,7 +35,7 @@ class TestWorkdays(unittest.TestCase):
 
     def test_binary_search_first_date(self):
         """Test that the binary search finds the first work date available."""
-        first_date = datetime.date(2012, 1, 2)  # workday from workdays.csv
+        first_date = datetime.date(2001, 1, 2)  # workday from workdays.csv
         actual = self.workdays.binary_search(self.workdays._workdays, first_date)
         expected = 0
 
@@ -43,15 +43,15 @@ class TestWorkdays(unittest.TestCase):
 
     def test_binary_search_last_date(self):
         """Test that the binary search finds the last work date."""
-        last_date = datetime.date(2078, 12, 23)  # workday from workdays.csv
+        last_date = datetime.date(2078, 12, 30)  # workday from workdays.csv
         actual = self.workdays.binary_search(self.workdays._workdays, last_date)
-        expected = 16_823
+        expected = 19_592
 
         self.assertEqual(actual, expected)
 
     def test_binary_search_outside_bottom_range(self):
         """Test for a working date outside the valid range, from bottom."""
-        date = datetime.date(2011, 12, 28)  # workday below 2012
+        date = datetime.date(2000, 12, 28)  # workday below 2012
 
         with self.assertRaises(LookupError):
             self.workdays.binary_search(self.workdays._workdays, date)
@@ -67,7 +67,7 @@ class TestWorkdays(unittest.TestCase):
         """Test an arbitrary work date for binary_search."""
         date = datetime.date(2072, 5, 12)
         actual = self.workdays.binary_search(self.workdays, date)
-        expected = 15_162
+        expected = 17_926
 
         self.assertEqual(actual, expected)
 
@@ -75,7 +75,7 @@ class TestWorkdays(unittest.TestCase):
         """Test an arbitrary work date for binary_search."""
         date = datetime.date(2060, 10, 15)
         actual = self.workdays.binary_search(self.workdays, date)
-        expected = 12_256
+        expected = 15_020
 
         self.assertEqual(actual, expected)
 
@@ -172,7 +172,7 @@ class TestWorkdays(unittest.TestCase):
     def test_get_extra_workdays_legth_after_range_1(self):
         """If the number of extra_workdays passes the top range, the
         tuple should include the days up to the last one."""
-        date = datetime.date(2078, 12, 22)  # penultimate workday
+        date = datetime.date(2078, 12, 29)  # penultimate workday
         actual = len(self.workdays.get_extra_workdays(date, 100))
         expected = 1
 
@@ -183,7 +183,7 @@ class TestWorkdays(unittest.TestCase):
         tuple should include the days up to the last one."""
         date = datetime.date(2078, 11, 10)
         actual = len(self.workdays.get_extra_workdays(date, 100))
-        expected = 30
+        expected = 35
 
         self.assertEqual(actual, expected)
 
