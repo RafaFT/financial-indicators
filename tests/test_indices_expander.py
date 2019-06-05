@@ -194,6 +194,109 @@ class TestDailyWorkdayIndicesExpander(unittest.TestCase):
         self.assertEqual(expected, actual)
 
 
+class TestGetNextDays(unittest.TestCase):
+    """ Class to test the method _get_next_days() of the IndicesExpander class."""
+
+    def setUp(self) -> None:
+        """ Instantiate IndicesExpander for each test."""
+        self.expander = IndicesExpander()
+
+    def test_simple_case(self):
+        """ Example of a simple call."""
+        input_ = (datetime.date(1991, 2, 26), datetime.date(1991, 3, 26))
+
+        expected = (datetime.date(1991, 2, 27), datetime.date(1991, 3, 27))
+        actual = self.expander._get_next_days(*input_)
+
+        self.assertEqual(expected, actual)
+
+    def test_delta_28_days(self):
+        """ With a few exceptions, the delta between the first date and the
+        second date should be equal to the number of days in the month of the
+        first date.
+        """
+        input_ = (datetime.date(1999, 2, 11), datetime.date(1999, 3, 11))
+        output = self.expander._get_next_days(*input_)
+        expected = 28
+        actual = (output[-1] - output[0]).days
+
+        self.assertEqual(expected, actual)
+
+    def test_delta_29_days(self):
+        """ With a few exceptions, the delta between the first date and the
+        second date should be equal to the number of days in the month of the
+        first date.
+        """
+        input_ = (datetime.date(2000, 2, 28), datetime.date(2000, 3, 28))
+        output = self.expander._get_next_days(*input_)
+        expected = 29
+        actual = (output[-1] - output[0]).days
+
+        self.assertEqual(expected, actual)
+
+    def test_delta_30_days(self):
+        """ With a few exceptions, the delta between the first date and the
+        second date should be equal to the number of days in the month of the
+        first date.
+        """
+        input_ = (datetime.date(1996, 4, 1), datetime.date(1996, 5, 1))
+        output = self.expander._get_next_days(*input_)
+        expected = 30
+        actual = (output[-1] - output[0]).days
+
+        self.assertEqual(expected, actual)
+
+    def test_delta_31_days(self):
+        """ With a few exceptions, the delta between the first date and the
+        second date should be equal to the number of days in the month of the
+        first date.
+        """
+        input_ = (datetime.date(1996, 3, 30), datetime.date(1996, 4, 30))
+        output = self.expander._get_next_days(*input_)
+        expected = 31
+        actual = (output[-1] - output[0]).days
+
+        self.assertEqual(expected, actual)
+
+    def test_first_date_static_1(self):
+        """ Sometimes, only the second date is incremented."""
+        input_ = (datetime.date(2006, 3, 1), datetime.date(2006, 3, 30))
+        expected = (datetime.date(2006, 3, 1), datetime.date(2006, 3, 31))
+        actual = self.expander._get_next_days(*input_)
+
+        self.assertEqual(expected, actual)
+
+    def test_first_date_static_2(self):
+        """ Sometimes, only the second date is incremented."""
+        input_ = (datetime.date(2006, 3, 1), datetime.date(2006, 3, 31))
+        expected = (datetime.date(2006, 3, 1), datetime.date(2006, 4, 1))
+        actual = self.expander._get_next_days(*input_)
+
+        self.assertEqual(expected, actual)
+
+    def test_second_date_static_(self):
+        """ Sometimes, only the first date is incremented."""
+        input_ = (datetime.date(2010, 5, 31), datetime.date(2010, 7, 1))
+        expected = (datetime.date(2010, 6, 1), datetime.date(2010, 7, 1))
+        actual = self.expander._get_next_days(*input_)
+
+        self.assertEqual(expected, actual)
+
+    def test_equal_dates(self):
+        """ When both dates are the same, ValueError should be raised."""
+        input_ = (datetime.date(2018, 12, 12), datetime.date(2018, 12, 12))
+        with self.assertRaises(ValueError):
+            self.expander._get_next_days(*input_)
+
+    def test_second_date_lower(self):
+        """ When the second date is lower than the first date, ValueError
+        should be raised.
+        """
+        input_ = (datetime.date(2015, 10, 24), datetime.date(2014, 12, 12))
+        with self.assertRaises(ValueError):
+            self.expander._get_next_days(*input_)
+
+
 class TestDailyThreeFieldIndicesExpander(unittest.TestCase):
     """ Class to test the _daily_three_field_indices_expander() method."""
 
