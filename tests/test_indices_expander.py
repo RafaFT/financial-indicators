@@ -274,10 +274,26 @@ class TestGetNextDays(unittest.TestCase):
 
         self.assertEqual(expected, actual)
 
-    def test_second_date_static_(self):
+    def test_second_date_static_1(self):
         """ Sometimes, only the first date is incremented."""
-        input_ = (datetime.date(2010, 5, 31), datetime.date(2010, 7, 1))
-        expected = (datetime.date(2010, 6, 1), datetime.date(2010, 7, 1))
+        input_ = (datetime.date(1993, 1, 29), datetime.date(1993, 3, 1))
+        expected = (datetime.date(1993, 1, 30), datetime.date(1993, 3, 1))
+        actual = self.expander._get_next_days(*input_)
+
+        self.assertEqual(expected, actual)
+
+    def test_second_date_static_2(self):
+        """ Sometimes, only the first date is incremented."""
+        input_ = (datetime.date(1993, 1, 30), datetime.date(1993, 3, 1))
+        expected = (datetime.date(1993, 1, 31), datetime.date(1993, 3, 1))
+        actual = self.expander._get_next_days(*input_)
+
+        self.assertEqual(expected, actual)
+
+    def test_second_date_static_3(self):
+        """ Sometimes, only the first date is incremented."""
+        input_ = (datetime.date(1993, 1, 31), datetime.date(1993, 3, 1))
+        expected = (datetime.date(1993, 2, 1), datetime.date(1993, 3, 1))
         actual = self.expander._get_next_days(*input_)
 
         self.assertEqual(expected, actual)
@@ -346,9 +362,9 @@ class TestDailyThreeFieldIndicesExpander(unittest.TestCase):
 
         self.assertTrue(all(same_date_values))
 
-    def test_new_items_have_increasing_dates(self):
-        """ Test to make sure that each new item created has a date higher
-        than the last date given.
+    def test_new_items_have_equal_higher_dates(self):
+        """ Test to make sure that each new item created has a date either
+        higher or equal than the last date given.
         """
         input_ = [
             self.indices_record(date=datetime.date(2014, 2, 24),
@@ -359,31 +375,11 @@ class TestDailyThreeFieldIndicesExpander(unittest.TestCase):
                                 value=0.0007),
         ]
         records = self.expander._daily_three_field_indices_expander(input_)
-        increasing_days = [records[index_].date < record.date and
-                           records[index_].end_date < record.end_date
+        increasing_days = [records[index_].date <= record.date and
+                           records[index_].end_date <= record.end_date
                            for index_, record in enumerate(records[1:])]
 
         self.assertTrue(all(increasing_days))
-
-    def test_last_output_date(self):
-        """ Since _daily_three_field_indices_expander adds 30 days in a row,
-        the last date from the output should be exactly 30 days ahead of the
-        last date from the input.
-        """
-        delta = datetime.timedelta(days=30)
-        input_ = [
-            self.indices_record(date=datetime.date(2017, 8, 21),
-                                end_date=datetime.date(2017, 9, 21),
-                                value=0.0122),
-            self.indices_record(date=datetime.date(2017, 8, 22),
-                                end_date=datetime.date(2017, 9, 22),
-                                value=0.0191),
-        ]
-        output = self.expander._daily_three_field_indices_expander(input_)
-        expected = input_[-1].date + delta
-        actual = output[-1].date
-
-        self.assertEqual(expected, actual)
 
     def test_last_value_replicated(self):
         """ Test to make sure that all expanded records have the same value as
@@ -406,21 +402,6 @@ class TestDailyThreeFieldIndicesExpander(unittest.TestCase):
 
         self.assertTrue(all(last_value_copied))
 
-    def test_match_input_output_dates(self):
-        """ Test to make sure all dates are correct."""
-        input_ = [
-            self.indices_record(date=datetime.date(1991, 2, 1),
-                                end_date=datetime.date(1991, 3, 1),
-                                value=7.0000),
-        ]
-        output = self.expander._daily_three_field_indices_expander(input_)
-        array_of_days = [input_[0].date] + [input_[0].date + datetime.timedelta(day)
-                                            for day in range(30)]
-        match_input_output_days = [record.date == date
-                                   for record, date in zip(output, array_of_days)]
-
-        self.assertTrue(all(match_input_output_days))
-
     def test_january_29_non_leap_year(self):
         """ On a non-leap year, the dates of 29, 30 and 31 of January should
         point to the the end_date of March the 1º.
@@ -436,9 +417,10 @@ class TestDailyThreeFieldIndicesExpander(unittest.TestCase):
                     (datetime.date(1993, 1, 29), datetime.date(1993, 3, 1)),
                     (datetime.date(1993, 1, 30), datetime.date(1993, 3, 1)),
                     (datetime.date(1993, 1, 31), datetime.date(1993, 3, 1)),
+                    (datetime.date(1993, 2, 1), datetime.date(1993, 3, 1)),
                     ]
 
-        actual = [(record.date, record.end_date) for record in output[:4]]
+        actual = [(record.date, record.end_date) for record in output[:5]]
 
         self.assertEqual(expected, actual)
 
@@ -498,8 +480,8 @@ class TestDailyThreeFieldIndicesExpander(unittest.TestCase):
         expected = [(datetime.date(2005, 12, 29), datetime.date(2006, 1, 29)),
                     (datetime.date(2005, 12, 30), datetime.date(2006, 1, 30)),
                     (datetime.date(2005, 12, 31), datetime.date(2006, 1, 31)),
-                    (datetime.date(2005, 1, 1), datetime.date(2006, 2, 1)),
-                    (datetime.date(2005, 1, 2), datetime.date(2006, 2, 2)),
+                    (datetime.date(2006, 1, 1), datetime.date(2006, 2, 1)),
+                    (datetime.date(2006, 1, 2), datetime.date(2006, 2, 2)),
                     ]
 
         actual = [(record.date, record.end_date) for record in output[:5]]
