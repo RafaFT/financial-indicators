@@ -5,7 +5,8 @@ from typing import (List,
                     Tuple,
                     )
 
-from bcb_api import (IndicesRecord,
+from bcb_api import (FinancialIndicesApi,
+                     IndicesRecord,
                      INDICES_DATE_VALUES,
                      RECORDS,
                      )
@@ -31,7 +32,7 @@ class IndicesExpander:
             11: self._daily_workday_indices_expander,  # Selic
             12: self._daily_workday_indices_expander,  # CDI
             226: self._daily_three_field_indices_expander,  # TR
-            433: self._ipca_from_15_expander,  # IPCA
+            7478: self._ipca_from_15_expander,  # IPCA-15
         }
 
         self._workdays = Workdays()
@@ -140,6 +141,36 @@ class IndicesExpander:
             extra_records.append(record)
 
         return financial_records + extra_records
+
+    def _ipca_from_15_expander(self, financial_records: RECORDS
+                               ) -> List[IndicesRecord]:
+        """ Return a list of IndicesRecord, where the last item is an extra
+        record, with the ipca-15 from the next month.
+        If ipca-15 is not available, the last record from the input list is
+        duplicated, instead.
+
+        :param financial_records: Sequence of IndicesRecord.
+        :return: List of IndicesRecord
+        """
+
+        if not financial_records:
+            return []
+
+        last_date = financial_records[-1].date
+        last_value = financial_records[-1].value
+        last_month = last_date.month
+        next_month = (last_month + 1) % 12 or 12
+        new_date = last_date.replace(month=next_month, day=1)
+
+        api = FinancialIndicesApi()
+        api.set_indices_records({7478: (last_date, None)})
+
+        if api[7478] and api[7478][0].date == new_date:
+            record = [api[7478][0]]
+        else:
+            record = [IndicesRecord({'date': new_date, 'value': last_value})]
+
+        return financial_records + record
 
     def set_expanded_indices(self, indices_code: int,
                              financial_records: RECORDS,
