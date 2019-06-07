@@ -562,16 +562,20 @@ class TestIpcaFrom15Expander(unittest.TestCase):
 
     def test_outside_bottom_range(self):
         """ If the last date of the input cannot be properly completed by the
-        first available date for the indices ipca-15, a ValueError should be
-        raised.
+        first available date for the indices ipca-15, the value of the last
+        record from the input should be repeated.
 
         The first record for ipca-15 is datetime.date(2000, 5, 1).
         """
         input_ = [
+            self.indices_record(date=datetime.date(2000, 2, 1), value=0.13),
             self.indices_record(date=datetime.date(2000, 3, 1), value=0.22),
         ]
-        with self.assertRaises(ValueError):
-            self.expander._ipca_from_15_expander(input_)
+        output = self.expander._ipca_from_15_expander(input_)
+        expected = self.indices_record(date=datetime.date(2000, 4, 1), value=0.22)
+        actual = output[-1]
+
+        self.assertEqual(expected, actual)
 
     def test_outside_top_range(self):
         """ If the last date of the input is newer than the ipca-15 date could
