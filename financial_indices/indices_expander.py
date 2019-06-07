@@ -6,7 +6,7 @@ from typing import (List,
                     )
 
 from bcb_api import (IndicesRecord,
-                     NDICES_DATE_VALUES,
+                     INDICES_DATE_VALUES,
                      RECORDS,
                      )
 from workdays import Workdays
@@ -30,6 +30,8 @@ class IndicesExpander:
         self._expander_methods_mapping = {
             11: self._daily_workday_indices_expander,  # Selic
             12: self._daily_workday_indices_expander,  # CDI
+            226: self._daily_three_field_indices_expander,  # TR
+            433: self._ipca_from_15_expander,  # IPCA
         }
 
         self._workdays = Workdays()
@@ -106,3 +108,51 @@ class IndicesExpander:
                          for day in extra_workdays]
 
         return financial_records + extra_records
+
+    def _daily_three_field_indices_expander(self, financial_records: RECORDS
+                                            ) -> List[IndicesRecord]:
+        """ Return a list of IndicesRecord, where the 'date' attribute of the
+        first IndicesRecord is one day ahead of the date of the last record
+        from financial_records.
+
+        The 'value' attribute of the last instance of financial_records is
+        repeated for the extra IndicesRecord's.
+
+        :param financial_records: Sequence of IndicesRecord.
+        :return: List of IndicesRecord
+        """
+
+        if not financial_records:
+            return []
+
+        date = financial_records[-1].date
+        end_date = financial_records[-1].end_date
+        value = financial_records[-1].value
+
+        extra_records = []
+        for _ in range(30):
+            date, end_date = self._get_next_days(date, end_date)
+            record = IndicesRecord(
+                {'date': date,
+                 'end_date': end_date,
+                 'value': value}
+            )
+            extra_records.append(record)
+
+        return financial_records + extra_records
+
+    def set_expanded_indices(self, indices_code: int,
+                             financial_records: RECORDS,
+                             ) -> None:
+        """ Expand and stores records based on the indices_code in
+        self._expanded_indices_records.
+
+        :param indices_code: Integer representing a financial indices from
+            BCB's API.
+        :param financial_records: Sequence of IndicesRecords to be expanded.
+        :return: None.
+        """
+
+        method = self._expander_methods_mapping[indices_code]
+
+        self._expanded_indices_records[indices_code] = method(financial_records)
