@@ -49,6 +49,14 @@ class IndicesWorkbook:
             self._workbook_path = filepath
             self._workbook = xlsx.load_workbook(self._workbook_path)
 
+    def __len__(self):
+        """ Return the number of worksheets inside self._workbook."""
+
+        return len(self._workbook.sheetnames)
+
+    def __repr__(self):
+        return f'{self.__class__.__name__}({self._workbook_path})'
+
     def _delete_all_sheets(self) -> None:
         """ Delete all existing worksheets from self._workbook."""
 
@@ -57,15 +65,15 @@ class IndicesWorkbook:
 
     def _create_sheet(self, indices_code: int) -> None:
         """ Create a worksheet in self._workbook based on the indices_code
-        value, only if a worksheet of that indices_code does not exist,
-        otherwise it does nothing.
+        value. If a worksheet already exists for that indices_code, it is
+        overwritten.
 
         :param indices_code: Integer representing a financial indices.
         """
 
         name = self.__class__._worksheet_properties[indices_code]['name']
         if name in self._workbook.sheetnames:
-            return
+            del self._workbook[name]
 
         color = self.__class__._worksheet_properties[indices_code]['color']
 
