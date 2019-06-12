@@ -63,23 +63,26 @@ class IndicesWorkbook:
         for sheet in self._workbook.sheetnames:
             del self._workbook[sheet]
 
-    def _create_sheet(self, indices_code: int) -> None:
-        """ Create a worksheet in self._workbook based on the indices_code
-        value. If a worksheet already exists for that indices_code, it is
-        overwritten.
+    def _create_sheet(self, indices_code: int) -> 'openpyxl.worksheet.worksheet.Worksheet':
+        """ Create and return a worksheet in self._workbook based on the
+        indices_code value. If that indices_code worksheet already exist, it
+        is simply returned.
 
         :param indices_code: Integer representing a financial indices.
+        :return: Worksheet object.
         """
 
         name = self.__class__._worksheet_properties[indices_code]['name']
         if name in self._workbook.sheetnames:
-            del self._workbook[name]
+            return self._workbook[name]
 
         color = self.__class__._worksheet_properties[indices_code]['color']
 
         ws = self._workbook.create_sheet(name)
         ws.title = name
         ws.sheet_properties.tabColor = color
+
+        return ws
 
     def save(self) -> None:
         """ Save self._workbook at self._workbook_path."""
