@@ -6,7 +6,7 @@ path = os.path.dirname(__file__)
 path = os.path.join(path, '..')
 sys.path.append(os.path.abspath(os.path.join(path, 'financial_indices')))
 
-from excel_handler import IndicesWorkbook
+from excel_writer import IndicesWorkbook
 
 
 class TestNewIndicesWorkbook(unittest.TestCase):
