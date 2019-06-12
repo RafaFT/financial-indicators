@@ -70,11 +70,10 @@ class TestExistingIndicesWorkbook(unittest.TestCase):
         """ Create an instance of IndicesWorkbook and save some data."""
         self.wb = IndicesWorkbook()
 
-        self.wb._create_sheet(11)
-        self.sheet = self.wb._workbook['selic']
+        self.ws = self.wb._create_sheet(11)
         for row in range(1, 101):
             for column in range(1, 101):
-                self.sheet.cell(row, column).value = row + column
+                self.ws.cell(row, column).value = row + column
 
     def tearDown(self) -> None:
         """ Attempt to delete a financial_indices.xlsx file from the current
@@ -94,19 +93,28 @@ class TestExistingIndicesWorkbook(unittest.TestCase):
 
         self.assertEqual(len(self.wb), 0)
 
-    def test_create_sheet_overrides_existing_sheet(self):
+    def test_create_sheet_return_same_existing_sheet(self):
         """ If _create_sheet() receives an integer of an already existing sheet,
-        that sheet should be overwritten."""
+        that existing sheet should be returned."""
 
-        # Make sure the sheet has values.
-        number_values = len(tuple(self.sheet.rows) + tuple(self.sheet.columns))
+        expected = id(self.ws)
 
-        self.assertTrue(number_values > 0)
+        # Try to create new sheet with the same name.
+        self.ws = self.wb._create_sheet(11)
+        actual = id(self.ws)
 
-        self.wb._create_sheet(11)
-        self.sheet = self.wb._workbook['selic']
-        expected = 0
-        actual = len(tuple(self.sheet.rows) + tuple(self.sheet.columns))
+        self.assertEqual(expected, actual)
+
+    def test_create_sheet_holds_same_existing_values(self):
+        """ If _create_sheet() receives an integer of an already existing sheet,
+        that existing sheet should be returned."""
+
+        # Store the existing values inside ws.
+        expected = tuple(self.ws.rows) + tuple(self.ws.columns)
+
+        # try to create new sheet with the same name.
+        self.ws = self.wb._create_sheet(11)
+        actual = tuple(self.ws.rows) + tuple(self.ws.columns)
 
         self.assertEqual(expected, actual)
 
