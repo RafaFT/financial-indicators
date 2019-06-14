@@ -1,10 +1,24 @@
+from abc import (ABCMeta,
+                 abstractmethod)
+import datetime
+import logging
 import os
 from types import MappingProxyType
-from typing import (Optional,
+from typing import (Collection,
+                    Iterable,
+                    Optional,
+                    Tuple,
+                    Union,
                     )
 
-
 import openpyxl as xlsx
+
+from bcb_api import (DAY_RECORD,
+                     IndicesRecord,
+                     RECORDS)
+
+
+logger = logging.getLogger(__name__)
 
 
 class IndicesWorkbook:
@@ -15,18 +29,22 @@ class IndicesWorkbook:
             11: {
                 'name': 'selic',
                 'color': '0000FF',  # blue
+                'writer': SelicWriter,
             },
             12: {
                 'name': 'cdi',
                 'color': '00FF00',  # green
+                'writer': CdiWriter,
             },
             433: {
                 'name': 'ipca',
                 'color': 'FFA500',  # orange
+                'writer': IpcaWriter,
             },
             226: {
                 'name': 'tr',
                 'color': 'FF0000',  # red
+                'writer': TrWriter,
             },
         },
     )
@@ -63,7 +81,8 @@ class IndicesWorkbook:
         for sheet in self._workbook.sheetnames:
             del self._workbook[sheet]
 
-    def _create_sheet(self, indices_code: int) -> 'openpyxl.worksheet.worksheet.Worksheet':
+    def _create_sheet(self, indices_code: int
+                      ) -> 'openpyxl.worksheet.worksheet.Worksheet':
         """ Create and return a worksheet in self._workbook based on the
         indices_code value. If that indices_code worksheet already exist, it
         is simply returned.
@@ -83,6 +102,25 @@ class IndicesWorkbook:
         ws.sheet_properties.tabColor = color
 
         return ws
+
+    def write_records(self, indices_code: int, records: RECORDS) -> None:
+        """ Create or load a worksheet from self._workbook, corresponding to
+        the indices_code provided, and pass both the worksheet and records
+        to the correct WorksheetWriter (ex: CdiWriter).
+
+        :param indices_code: Integer representing a financial indices.
+        :param records: Records of a financial indices.
+        :return: None.
+        """
+
+        try:
+            ws = self._workbook[self.__class__._worksheet_properties[indices_code]['name']]
+        except KeyError:
+            ws = self._create_sheet(indices_code)
+
+        writer = self.__class__._worksheet_properties[indices_code]['writer']
+
+        writer(ws, records)
 
     def save(self) -> None:
         """ Save self._workbook at self._workbook_path."""
