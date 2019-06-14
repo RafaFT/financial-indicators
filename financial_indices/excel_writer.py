@@ -69,6 +69,133 @@ class WorksheetWriter(metaclass=ABCMeta):
                 self._worksheet.cell(row, column).value = column_data
 
 
+class SelicWriter(WorksheetWriter):
+
+    def _format_record(self, record: DAY_RECORD
+                       ) -> Iterable[Union[float, datetime.date]]:
+        """ Format a record to be appropriate to the worksheet selic.
+
+        :param record: IndicesRecord.
+        :return: Iterable of the values of record.
+        """
+
+        return record.date, record.value
+
+
+class CdiWriter(WorksheetWriter):
+
+    @staticmethod
+    def _decimal_precision(value: float) -> int:
+        """ Return an integer signifying how many decimal point are necessary
+        to properly represent value.
+
+        :param value: Any number.
+        :return: Necessary decimal points to represent value.
+        """
+
+        precision = 0
+        while not float.is_integer(value):
+            value *= 10
+            precision += 1
+
+        return precision
+
+    def _generate_percentage_range(self, start: float, end: float, step: float
+                                   ) -> Tuple[float]:
+        """ Return all values between start and end (both included), that can
+        can be achieved with increments of step.
+
+        Pre-Condition: (start + (step * number_steps)) == end
+
+        :param start: Initial value.
+        :param end: Last value.
+        :param step: Increment step.
+        :return: All values between start and end (included).
+        """
+
+        number_steps = (end - start) / step
+
+        # If number_steps isn't an integer, than it's impossible for the
+        # summation of start and steps to ever reach the end.
+        if not float.is_integer(number_steps):
+            raise ValueError(f'Wrong values for start: {start} end:{end} '
+                             f'and step:{step}')
+        else:
+            number_steps = int(number_steps)
+
+        decimal_points = self._decimal_precision(step)
+        cdi_range = [start]
+        for _ in range(number_steps):
+            start = round(start + step, decimal_points)
+            cdi_range.append(start)
+
+        assert cdi_range[-1] == end
+
+        return tuple(cdi_range)
+
+    def _get_headers(self) -> Tuple[Union[str, float]]:
+        """ Generate the headers for a CDI worksheet, with percentages
+        ranging from 0.700 to 2.000, with increments of 0.001 (70% to 200%).
+
+        :return: Tuple of values.
+        """
+
+        return super()._get_headers() + self._generate_percentage_range(
+            0.7, 2.0, 0.001
+        )
+
+    def _format_record(self, record: DAY_RECORD
+                       ) -> Iterable[Union[float, datetime.date]]:
+        """ Format a record to be appropriate to the worksheet cdi.
+
+        :param record: IndicesRecord.
+        :return: Iterable of the values of record.
+        """
+
+        elements = [record.date, record.value]
+        for percentage in self._headers[len(super()._get_headers()):]:
+            elements.append(1 + round(record.value * percentage / 100, 8))
+
+        return iter(elements)
+
+
+class IpcaWriter(WorksheetWriter):
+
+    def _get_headers(self) -> Tuple[Union[str, float]]:
+        """ Return the name of the headers. Headers may be string or numbers.
+        """
+
+        return ('ano', 'mes', 'valor')
+
+    def _format_record(self, record: DAY_RECORD
+                       ) -> Iterable[Union[float, datetime.date]]:
+        """ Format a record to be appropriate to the worksheet ipca.
+
+        :param record: IndicesRecord.
+        :return: Iterable of the values of record.
+        """
+
+        return record.date.year, record.date.month, record.value
+
+
+class TrWriter(WorksheetWriter):
+
+    def _get_headers(self) -> Tuple[Union[str, float]]:
+        """ Return the name of the headers. Headers may be string or numbers.
+        """
+
+        return ('data inicial', 'data final', 'valor')
+
+    def _format_record(self, record: DAY_RECORD) -> Collection:
+        """ Format a record to be appropriate to the worksheet tr.
+
+        :param record: IndicesRecord.
+        :return: Iterable of the values of record.
+        """
+
+        return record.date, record.end_date, record.value
+
+
 class IndicesWorkbook:
     """ Class to represent an excel Workbook."""
 
