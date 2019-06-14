@@ -21,6 +21,54 @@ from bcb_api import (DAY_RECORD,
 logger = logging.getLogger(__name__)
 
 
+class WorksheetWriter(metaclass=ABCMeta):
+    """ Class responsible for writing information in a Worksheet object."""
+
+    def __init__(self, worksheet: 'openpyxl.worksheet.worksheet.Worksheet',
+                 records: RECORDS):
+        """
+        :param worksheet:
+        :param records:
+        """
+
+        self._worksheet = worksheet
+        self._indices_records = records
+        self._headers = self._get_headers()
+
+        self._write_headers()
+        self._write_records()
+
+    def _get_headers(self) -> Tuple[Union[str, float]]:
+        """ Return the name of the headers. Headers may be text or numbers.
+        """
+
+        return ('date', 'value',)
+
+    @abstractmethod
+    def _format_record(self, record: DAY_RECORD) -> Collection:
+        """ Return a collection of values corresponding to a row of data."""
+        pass
+
+    def _write_headers(self) -> None:
+        """ Write the self._headers values starting at row 1, column 1."""
+
+        for column, header in enumerate(self._headers, 1):
+            self._worksheet.cell(1, column).value = header
+
+    def _write_records(self, first_row: int = 2) -> None:
+        """ Write all dates and values from self._indices_records in
+        self._worksheet, starting at the first_row, column 1.
+
+        :param first_row: Row to start writing.
+        :return: None.
+        """
+
+        for row, record in enumerate(self._indices_records, first_row):
+            formatted_record = self._format_record(record)
+            for column, column_data in enumerate(formatted_record, 1):
+                self._worksheet.cell(row, column).value = column_data
+
+
 class IndicesWorkbook:
     """ Class to represent an excel Workbook."""
 
