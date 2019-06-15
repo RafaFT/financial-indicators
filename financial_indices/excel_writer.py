@@ -196,30 +196,59 @@ class TrWriter(WorksheetWriter):
         return record.date, record.end_date, record.value
 
 
+class MetadataWriter:
+    """ Class to write and update values in the worksheet responsible for storing
+    metadata information about each indices.
+    """
+
+    def __init__(self, worksheet: 'openpyxl.worksheet.worksheet.Worksheet'):
+        """ Constructor of MetadataWriter."""
+
+        self._worksheet = worksheet
+
+        self._write_headers()
+
+    def _write_headers(self) -> None:
+        """ Write the the header values starting at row 1, column 1."""
+
+        for column, header in enumerate(('indices', 'date'), 1):
+            self._worksheet.cell(1, column).value = header
+
+
 class IndicesWorkbook:
     """ Class to represent an excel Workbook."""
 
     _worksheet_properties = MappingProxyType(
         {
+            -1: {
+                'name': 'metadata',
+                'color': '000000',
+                'writer': MetadataWriter,
+                'state': 'veryHidden',
+            },
             11: {
                 'name': 'selic',
                 'color': '0000FF',  # blue
                 'writer': SelicWriter,
+                'state': 'visible',
             },
             12: {
                 'name': 'cdi',
                 'color': '00FF00',  # green
                 'writer': CdiWriter,
+                'state': 'visible',
             },
             433: {
                 'name': 'ipca',
                 'color': 'FFA500',  # orange
                 'writer': IpcaWriter,
+                'state': 'visible',
             },
             226: {
                 'name': 'tr',
                 'color': 'FF0000',  # red
                 'writer': TrWriter,
+                'state': 'visible',
             },
         },
     )
@@ -245,6 +274,10 @@ class IndicesWorkbook:
         except FileNotFoundError:
             self._workbook = xlsx.Workbook()
             self._delete_all_sheets()
+
+        worksheet_metadata = self._create_sheet(-1)
+        metadata_writer = self.__class__._worksheet_properties[-1]['writer']
+        self._metadata_writer = metadata_writer(worksheet_metadata)
 
     def __len__(self):
         """ Return the number of worksheets inside self._workbook."""
@@ -275,10 +308,12 @@ class IndicesWorkbook:
             return self._workbook[name]
         except KeyError:
             color = self.__class__._worksheet_properties[indices_code]['color']
+            state = self.__class__._worksheet_properties[indices_code]['state']
 
             ws = self._workbook.create_sheet(name)
             ws.title = name
             ws.sheet_properties.tabColor = color
+            ws.sheet_state = state
 
             return ws
 
