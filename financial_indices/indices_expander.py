@@ -32,7 +32,7 @@ class IndicesExpander:
             11: self._daily_workday_indices_expander,  # Selic
             12: self._daily_workday_indices_expander,  # CDI
             226: self._daily_three_field_indices_expander,  # TR
-            7478: self._ipca_from_15_expander,  # IPCA-15
+            433: self._ipca_from_15_expander,  # Expand ipca with IPCA-15
         }
 
         self._workdays = Workdays()
