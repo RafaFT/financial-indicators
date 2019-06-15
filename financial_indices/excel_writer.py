@@ -224,23 +224,27 @@ class IndicesWorkbook:
         },
     )
 
-    def __init__(self, filepath: Optional[str] = None):
+    def __init__(self, path_to_file: Optional[str] = None,
+                 filename: str = 'financial_indices.xlsx') -> None:
         """ Constructor of a workbook.
-        If a filepath is given, that xlsx file is opened, otherwise, a file
-        named 'financial_indices.xlsx' is created at the current directory.
+        If path_to_file is None, than it is set to the current working directory.
+        If filename exists in path_to_file, it is loaded, otherwise a new file
+        is created.
 
-        :param filepath: String of a valid 'financial_indices.xlsx' file.
+        :param path_to_file: String of a valid path, where the filename exists.
+        :param filename: Name of the file that either is being load or created.
         """
 
-        if filepath is None:
-            filename = 'financial_indices.xlsx'
-            current_path = os.path.abspath(os.getcwd())
-            self._workbook_path = os.path.join(current_path, filename)
+        if path_to_file is None:
+            path_to_file = os.path.abspath(os.getcwd())
+
+        self._workbook_path = os.path.join(path_to_file, filename)
+
+        try:
+            self._workbook = xlsx.load_workbook(self._workbook_path)
+        except FileNotFoundError:
             self._workbook = xlsx.Workbook()
             self._delete_all_sheets()
-        else:
-            self._workbook_path = filepath
-            self._workbook = xlsx.load_workbook(self._workbook_path)
 
     def __len__(self):
         """ Return the number of worksheets inside self._workbook."""
