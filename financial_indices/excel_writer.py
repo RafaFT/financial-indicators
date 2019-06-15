@@ -259,7 +259,7 @@ class IndicesWorkbook:
     def _create_sheet(self, indices_code: int
                       ) -> 'openpyxl.worksheet.worksheet.Worksheet':
         """ Create and return a worksheet in self._workbook based on the
-        indices_code value. If that indices_code worksheet already exist, it
+        indices_code value. If that indices_code worksheet already exists, it
         is simply returned.
 
         :param indices_code: Integer representing a financial indices.
@@ -267,16 +267,16 @@ class IndicesWorkbook:
         """
 
         name = self.__class__._worksheet_properties[indices_code]['name']
-        if name in self._workbook.sheetnames:
+        try:
             return self._workbook[name]
+        except KeyError:
+            color = self.__class__._worksheet_properties[indices_code]['color']
 
-        color = self.__class__._worksheet_properties[indices_code]['color']
+            ws = self._workbook.create_sheet(name)
+            ws.title = name
+            ws.sheet_properties.tabColor = color
 
-        ws = self._workbook.create_sheet(name)
-        ws.title = name
-        ws.sheet_properties.tabColor = color
-
-        return ws
+            return ws
 
     def write_records(self, indices_code: int, records: RECORDS) -> None:
         """ Create or load a worksheet from self._workbook, corresponding to
@@ -288,10 +288,7 @@ class IndicesWorkbook:
         :return: None.
         """
 
-        try:
-            ws = self._workbook[self.__class__._worksheet_properties[indices_code]['name']]
-        except KeyError:
-            ws = self._create_sheet(indices_code)
+        ws = self._create_sheet(indices_code)
 
         writer = self.__class__._worksheet_properties[indices_code]['writer']
 
