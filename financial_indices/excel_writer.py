@@ -343,6 +343,20 @@ class IndicesWorkbook:
 
             return ws
 
+    def get_last_indices_date(self, indices_code: int) -> Optional[datetime.date]:
+        """ Return the date of indices_code on the self._metadata_writer.
+        If indices_code value is not present in self._metadata_writer, None
+        is returned.
+
+        :param indices_code: Integer representing a financial indices.
+        :return: Date or None.
+        """
+
+        try:
+            return self._metadata_writer.indices_dates[indices_code]
+        except KeyError:
+            return None
+
     def write_records(self, indices_code: int,
                       records: RECORDS,
                       last_non_extended_date: Optional[datetime.date] = None) -> None:
