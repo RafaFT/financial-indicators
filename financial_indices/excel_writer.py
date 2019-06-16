@@ -4,7 +4,8 @@ import datetime
 import logging
 import os
 from types import MappingProxyType
-from typing import (Collection,
+from typing import (Dict,
+                    Collection,
                     Iterable,
                     Optional,
                     Tuple,
@@ -207,12 +208,37 @@ class MetadataWriter:
         self._worksheet = worksheet
 
         self._write_headers()
+        self.indices_dates = self._get_indices_last_date()
 
     def _write_headers(self) -> None:
         """ Write the the header values starting at row 1, column 1."""
 
-        for column, header in enumerate(('indices', 'date'), 1):
+        for column, header in enumerate(('indices', 'last date'), 1):
             self._worksheet.cell(1, column).value = header
+
+    def _get_indices_last_date(self) -> Dict[int, Union[datetime.date, None]]:
+        """ Return a dictionary with all existing indices and last dates stored
+        in self._worksheet.
+        """
+        indices_date = {}
+        for row in range(self._worksheet.max_row, 1, -1):
+            cod = int(self._worksheet.cell(row, 1).value)
+            try:
+                date = self._worksheet.cell(row, 2).value.date()
+            except AttributeError:
+                date = None
+            indices_date[cod] = date
+
+        return indices_date
+
+    def write_indices_last_date(self) -> None:
+        """ Writes self.indices_dates values on self._worksheet."""
+
+        row = 2
+        for indices, date in sorted(self.indices_dates.items()):
+            self._worksheet.cell(row, 1).value = indices
+            self._worksheet.cell(row, 2).value = date
+            row += 1
 
 
 class IndicesWorkbook:
@@ -317,13 +343,17 @@ class IndicesWorkbook:
 
             return ws
 
-    def write_records(self, indices_code: int, records: RECORDS) -> None:
+    def write_records(self, indices_code: int,
+                      records: RECORDS,
+                      last_non_extended_date: Optional[datetime.date] = None) -> None:
         """ Create or load a worksheet from self._workbook, corresponding to
         the indices_code provided, and pass both the worksheet and records
         to the correct WorksheetWriter (ex: CdiWriter).
 
         :param indices_code: Integer representing a financial indices.
         :param records: Records of a financial indices.
+        :param last_non_extended_date: The last date on records, that is a real
+            record, and not an extended one.
         :return: None.
         """
 
@@ -332,8 +362,11 @@ class IndicesWorkbook:
         writer = self.__class__._worksheet_properties[indices_code]['writer']
 
         writer(ws, records)
+        self._metadata_writer.indices_dates[indices_code] = last_non_extended_date
 
     def save(self) -> None:
         """ Save self._workbook at self._workbook_path."""
+
+        self._metadata_writer.write_indices_last_date()
 
         self._workbook.save(self._workbook_path)
