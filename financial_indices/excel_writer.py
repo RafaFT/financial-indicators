@@ -56,13 +56,42 @@ class WorksheetWriter(metaclass=ABCMeta):
         for column, header in enumerate(self._headers, 1):
             self._worksheet.cell(1, column).value = header
 
-    def _write_records(self, first_row: int = 2) -> None:
-        """ Write all dates and values from self._indices_records in
-        self._worksheet, starting at the first_row, column 1.
+    def _get_first_row(self, first_date: datetime.date) -> int:
+        """ Return the first row to start writing the self._indices_records,
+        based on the first_date value provided.
 
-        :param first_row: Row to start writing.
+        :param first_date: The first date from self._indices_records.
+        :return: Integer of the row to start writing.
+        """
+
+        column = 1
+        for row in range(self._worksheet.max_row, 1, -1):
+            date_on_cell = self._worksheet.cell(row, column).value.date()
+
+            if date_on_cell == first_date:
+                return row
+            elif date_on_cell < first_date:
+                return row + 1
+        else:
+            return 1
+
+    def _write_records(self) -> None:
+        """ Write all dates and values from self._indices_records in
+        self._worksheet.
+
         :return: None.
         """
+
+        try:
+            first_date = self._indices_records[0].date
+        except KeyError:
+            first_row = 1
+        else:
+            first_row = self._get_first_row(first_date)
+
+        if first_row == 1:
+            self._write_headers()
+            first_row = 2
 
         for row, record in enumerate(self._indices_records, first_row):
             formatted_record = self._format_record(record)
@@ -177,6 +206,26 @@ class IpcaWriter(WorksheetWriter):
         """
 
         return record.date.year, record.date.month, record.value
+
+    def _get_first_row(self, first_date: datetime.date) -> int:
+        """ Return the first row to start writing the self._indices_records,
+        based on the first_date value provided.
+
+        :param first_date: The first date from self._indices_records.
+        :return: Integer of the row to start writing.
+        """
+
+        for row in range(self._worksheet.max_row, 1, -1):
+            year = self._worksheet.cell(row, 1).value
+            month = self._worksheet.cell(row, 2).value
+            date_on_cell = datetime.date(year, month, 1)
+
+            if date_on_cell == first_date:
+                return row
+            elif date_on_cell < first_date:
+                return row + 1
+        else:
+            return 1
 
 
 class TrWriter(WorksheetWriter):
