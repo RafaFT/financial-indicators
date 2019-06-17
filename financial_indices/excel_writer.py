@@ -36,7 +36,6 @@ class WorksheetWriter(metaclass=ABCMeta):
         self._indices_records = records
         self._headers = self._get_headers()
 
-        self._write_headers()
         self._write_records()
 
     def _get_headers(self) -> Tuple[Union[str, float]]:
