@@ -4,7 +4,8 @@ import datetime
 import logging
 import os
 from types import MappingProxyType
-from typing import (Collection,
+from typing import (Dict,
+                    Collection,
                     Iterable,
                     Optional,
                     Tuple,
@@ -35,7 +36,6 @@ class WorksheetWriter(metaclass=ABCMeta):
         self._indices_records = records
         self._headers = self._get_headers()
 
-        self._write_headers()
         self._write_records()
 
     def _get_headers(self) -> Tuple[Union[str, float]]:
@@ -55,18 +55,64 @@ class WorksheetWriter(metaclass=ABCMeta):
         for column, header in enumerate(self._headers, 1):
             self._worksheet.cell(1, column).value = header
 
-    def _write_records(self, first_row: int = 2) -> None:
-        """ Write all dates and values from self._indices_records in
-        self._worksheet, starting at the first_row, column 1.
+    def _get_first_row(self, first_date: datetime.date) -> int:
+        """ Return the first row to start writing the self._indices_records,
+        based on the first_date value provided.
 
-        :param first_row: Row to start writing.
+        :param first_date: The first date from self._indices_records.
+        :return: Integer of the row to start writing.
+        """
+
+        column = 1
+        for row in range(self._worksheet.max_row, 1, -1):
+            date_on_cell = self._worksheet.cell(row, column).value.date()
+
+            if date_on_cell == first_date:
+                return row
+            elif date_on_cell < first_date:
+                return row + 1
+        else:
+            return 1
+
+    def _erase_extra_records(self, row: int) -> None:
+        """ Removes all records from row to the max row, and column 1 to the
+        max column.
+
+        :param row: Integer of the first row to erase values.
         :return: None.
         """
+
+        for row in range(row, self._worksheet.max_row + 1):
+            for column in range(1, self._worksheet.max_column + 1):
+                self._worksheet.cell(row, column).value = None
+
+    def _write_records(self) -> None:
+        """ Write all dates and values from self._indices_records in
+        self._worksheet.
+
+        :return: None.
+        """
+
+        try:
+            first_date = self._indices_records[0].date
+        except KeyError:
+            first_row = 1
+        else:
+            first_row = self._get_first_row(first_date)
+
+        if first_row == 1:
+            self._write_headers()
+            first_row = 2
 
         for row, record in enumerate(self._indices_records, first_row):
             formatted_record = self._format_record(record)
             for column, column_data in enumerate(formatted_record, 1):
                 self._worksheet.cell(row, column).value = column_data
+
+        try:
+            self._erase_extra_records(row + 1)
+        except NameError:
+            self._erase_extra_records(first_row)
 
 
 class SelicWriter(WorksheetWriter):
@@ -177,6 +223,26 @@ class IpcaWriter(WorksheetWriter):
 
         return record.date.year, record.date.month, record.value
 
+    def _get_first_row(self, first_date: datetime.date) -> int:
+        """ Return the first row to start writing the self._indices_records,
+        based on the first_date value provided.
+
+        :param first_date: The first date from self._indices_records.
+        :return: Integer of the row to start writing.
+        """
+
+        for row in range(self._worksheet.max_row, 1, -1):
+            year = self._worksheet.cell(row, 1).value
+            month = self._worksheet.cell(row, 2).value
+            date_on_cell = datetime.date(year, month, 1)
+
+            if date_on_cell == first_date:
+                return row
+            elif date_on_cell < first_date:
+                return row + 1
+        else:
+            return 1
+
 
 class TrWriter(WorksheetWriter):
 
@@ -196,51 +262,116 @@ class TrWriter(WorksheetWriter):
         return record.date, record.end_date, record.value
 
 
+class MetadataWriter:
+    """ Class to write and update values in the worksheet responsible for storing
+    metadata information about each indices.
+    """
+
+    def __init__(self, worksheet: 'openpyxl.worksheet.worksheet.Worksheet'):
+        """ Constructor of MetadataWriter."""
+
+        self._worksheet = worksheet
+
+        self._write_headers()
+        self.indices_dates = self._get_indices_last_date()
+
+    def _write_headers(self) -> None:
+        """ Write the the header values starting at row 1, column 1."""
+
+        for column, header in enumerate(('indices', 'last date'), 1):
+            self._worksheet.cell(1, column).value = header
+
+    def _get_indices_last_date(self) -> Dict[int, Union[datetime.date, None]]:
+        """ Return a dictionary with all existing indices and last dates stored
+        in self._worksheet.
+        """
+        indices_date = {}
+        for row in range(self._worksheet.max_row, 1, -1):
+            try:
+                cod = int(self._worksheet.cell(row, 1).value)
+            except TypeError:
+                continue
+            try:
+                date = self._worksheet.cell(row, 2).value.date()
+            except AttributeError:
+                date = None
+            indices_date[cod] = date
+
+        return indices_date
+
+    def write_indices_last_date(self) -> None:
+        """ Writes self.indices_dates values on self._worksheet."""
+
+        row = 2
+        for indices, date in sorted(self.indices_dates.items()):
+            self._worksheet.cell(row, 1).value = indices
+            self._worksheet.cell(row, 2).value = date
+            row += 1
+
+
 class IndicesWorkbook:
     """ Class to represent an excel Workbook."""
 
     _worksheet_properties = MappingProxyType(
         {
+            -1: {
+                'name': 'metadata',
+                'color': '000000',
+                'writer': MetadataWriter,
+                'state': 'veryHidden',
+            },
             11: {
                 'name': 'selic',
                 'color': '0000FF',  # blue
                 'writer': SelicWriter,
+                'state': 'visible',
             },
             12: {
                 'name': 'cdi',
                 'color': '00FF00',  # green
                 'writer': CdiWriter,
+                'state': 'visible',
             },
             433: {
                 'name': 'ipca',
                 'color': 'FFA500',  # orange
                 'writer': IpcaWriter,
+                'state': 'visible',
             },
             226: {
                 'name': 'tr',
                 'color': 'FF0000',  # red
                 'writer': TrWriter,
+                'state': 'visible',
             },
         },
     )
 
-    def __init__(self, filepath: Optional[str] = None):
+    def __init__(self, path_to_file: Optional[str] = None,
+                 filename: str = 'financial_indices.xlsx') -> None:
         """ Constructor of a workbook.
-        If a filepath is given, that xlsx file is opened, otherwise, a file
-        named 'financial_indices.xlsx' is created at the current directory.
+        If path_to_file is None, than it is set to the current working directory.
+        If filename exists in path_to_file, it is loaded, otherwise a new file
+        is created.
 
-        :param filepath: String of a valid 'financial_indices.xlsx' file.
+        :param path_to_file: String of a valid path, where the filename exists.
+        :param filename: Name of the file that either is being load or created.
         """
 
-        if filepath is None:
-            filename = 'financial_indices.xlsx'
-            current_path = os.path.abspath(os.getcwd())
-            self._workbook_path = os.path.join(current_path, filename)
+        if path_to_file is None:
+            path_to_file = os.path.abspath(os.getcwd())
+
+        self._workbook_path = os.path.join(path_to_file, filename)
+
+        try:
+            self._workbook = xlsx.load_workbook(self._workbook_path)
+        except FileNotFoundError:
             self._workbook = xlsx.Workbook()
             self._delete_all_sheets()
-        else:
-            self._workbook_path = filepath
-            self._workbook = xlsx.load_workbook(self._workbook_path)
+
+        worksheet_metadata = self._create_sheet(-1)
+        metadata_writer = self.__class__._worksheet_properties[-1]['writer']
+        self._metadata_writer = metadata_writer(worksheet_metadata)
 
     def __len__(self):
         """ Return the number of worksheets inside self._workbook."""
@@ -259,7 +390,7 @@ class IndicesWorkbook:
     def _create_sheet(self, indices_code: int
                       ) -> 'openpyxl.worksheet.worksheet.Worksheet':
         """ Create and return a worksheet in self._workbook based on the
-        indices_code value. If that indices_code worksheet already exist, it
+        indices_code value. If that indices_code worksheet already exists, it
         is simply returned.
 
         :param indices_code: Integer representing a financial indices.
@@ -267,37 +398,57 @@ class IndicesWorkbook:
         """
 
         name = self.__class__._worksheet_properties[indices_code]['name']
-        if name in self._workbook.sheetnames:
+        try:
             return self._workbook[name]
+        except KeyError:
+            color = self.__class__._worksheet_properties[indices_code]['color']
+            state = self.__class__._worksheet_properties[indices_code]['state']
 
-        color = self.__class__._worksheet_properties[indices_code]['color']
+            ws = self._workbook.create_sheet(name)
+            ws.title = name
+            ws.sheet_properties.tabColor = color
+            ws.sheet_state = state
 
-        ws = self._workbook.create_sheet(name)
-        ws.title = name
-        ws.sheet_properties.tabColor = color
+            return ws
 
-        return ws
+    def get_last_indices_date(self, indices_code: int) -> Optional[datetime.date]:
+        """ Return the date of indices_code on the self._metadata_writer.
+        If indices_code value is not present in self._metadata_writer, None
+        is returned.
 
-    def write_records(self, indices_code: int, records: RECORDS) -> None:
+        :param indices_code: Integer representing a financial indices.
+        :return: Date or None.
+        """
+
+        try:
+            return self._metadata_writer.indices_dates[indices_code]
+        except KeyError:
+            return None
+
+    def write_records(self, indices_code: int,
+                      records: RECORDS,
+                      last_non_extended_date: Optional[datetime.date] = None) -> None:
         """ Create or load a worksheet from self._workbook, corresponding to
         the indices_code provided, and pass both the worksheet and records
         to the correct WorksheetWriter (ex: CdiWriter).
 
         :param indices_code: Integer representing a financial indices.
         :param records: Records of a financial indices.
+        :param last_non_extended_date: The last date on records, that is a real
+            record, and not an extended one.
         :return: None.
         """
 
-        try:
-            ws = self._workbook[self.__class__._worksheet_properties[indices_code]['name']]
-        except KeyError:
-            ws = self._create_sheet(indices_code)
+        ws = self._create_sheet(indices_code)
 
         writer = self.__class__._worksheet_properties[indices_code]['writer']
 
         writer(ws, records)
+        self._metadata_writer.indices_dates[indices_code] = last_non_extended_date
 
     def save(self) -> None:
         """ Save self._workbook at self._workbook_path."""
+
+        self._metadata_writer.write_indices_last_date()
 
         self._workbook.save(self._workbook_path)

@@ -214,7 +214,7 @@ class FinancialIndicesApi:
 
         return new_records_array
 
-    def _get_latest_date(self, indices_code: int) -> Optional[datetime.date]:
+    def get_latest_date(self, indices_code: int) -> Optional[datetime.date]:
         """ Return the date of the latest IndicesRecord record from
         self._indices_records[indices_code].
 
