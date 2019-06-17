@@ -288,7 +288,10 @@ class MetadataWriter:
         """
         indices_date = {}
         for row in range(self._worksheet.max_row, 1, -1):
-            cod = int(self._worksheet.cell(row, 1).value)
+            try:
+                cod = int(self._worksheet.cell(row, 1).value)
+            except TypeError:
+                continue
             try:
                 date = self._worksheet.cell(row, 2).value.date()
             except AttributeError:
