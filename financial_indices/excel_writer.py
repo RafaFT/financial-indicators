@@ -75,6 +75,18 @@ class WorksheetWriter(metaclass=ABCMeta):
         else:
             return 1
 
+    def _erase_extra_records(self, row: int) -> None:
+        """ Removes all records from row to the max row, and column 1 to the
+        max column.
+
+        :param row: Integer of the first row to erase values.
+        :return: None.
+        """
+
+        for row in range(row, self._worksheet.max_row + 1):
+            for column in range(1, self._worksheet.max_column + 1):
+                self._worksheet.cell(row, column).value = None
+
     def _write_records(self) -> None:
         """ Write all dates and values from self._indices_records in
         self._worksheet.
@@ -97,6 +109,11 @@ class WorksheetWriter(metaclass=ABCMeta):
             formatted_record = self._format_record(record)
             for column, column_data in enumerate(formatted_record, 1):
                 self._worksheet.cell(row, column).value = column_data
+
+        try:
+            self._erase_extra_records(row + 1)
+        except NameError:
+            self._erase_extra_records(first_row)
 
 
 class SelicWriter(WorksheetWriter):
