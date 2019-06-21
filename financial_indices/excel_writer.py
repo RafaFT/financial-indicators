@@ -8,6 +8,7 @@ from typing import (Dict,
                     Collection,
                     Iterable,
                     Optional,
+                    Set,
                     Tuple,
                     Union,
                     )
@@ -312,6 +313,27 @@ class MetadataWriter:
 class IndicesWorkbook:
     """ Class to represent an excel Workbook."""
 
+    _worksheet_protection = MappingProxyType({
+        'autoFilter': True,
+        'deleteColumns': True,
+        'deleteRows': True,
+        'formatCells': True,
+        'formatColumns': False,
+        'formatRows': False,
+        'insertColumns': True,
+        'insertHyperlinks': True,
+        'insertRows': True,
+        'objects': False,
+        'password': 'KawhiLeonardRocks',
+        'pivotTables': True,
+        'scenarios': False,
+        'selectLockedCells': False,
+        'selectUnlockedCells': False,
+        'sheet': True,
+        'sort': True,
+    }
+    )
+
     _worksheet_properties = MappingProxyType(
         {
             -1: {
@@ -427,7 +449,8 @@ class IndicesWorkbook:
 
     def write_records(self, indices_code: int,
                       records: RECORDS,
-                      last_non_extended_date: Optional[datetime.date] = None) -> None:
+                      last_non_extended_date: Optional[datetime.date] = None
+                      ) -> None:
         """ Create or load a worksheet from self._workbook, corresponding to
         the indices_code provided, and pass both the worksheet and records
         to the correct WorksheetWriter (ex: CdiWriter).
@@ -446,9 +469,43 @@ class IndicesWorkbook:
         writer(ws, records)
         self._metadata_writer.indices_dates[indices_code] = last_non_extended_date
 
+    def _get_existing_indices_sheets(self) -> Set['openpyxl.worksheet.worksheet.Worksheet']:
+        """ Return a set of all existing worksheets from self._workbook, whose
+        names correspond to any of the names from self._worksheet_properties.
+
+        :return: Set of worksheet objects.
+        """
+
+        name_to_code = {self.__class__._worksheet_properties[code]['name']: code
+                        for code in self.__class__._worksheet_properties}
+        indices_worksheets = set()
+
+        for sheet_name in self._workbook.sheetnames:
+            try:
+                code = name_to_code[sheet_name]
+            except KeyError:
+                continue
+            else:
+                indices_worksheets.add(self._create_sheet(code))
+
+        return indices_worksheets
+
+    def _protect_all_sheets(self) -> None:
+        """ Protect all sheets described in self.__class__._worksheet_properties,
+        using the parameters and values from self.__class__._worksheet_protection.
+
+        :return: None.
+        """
+
+        for worksheet in self._get_existing_indices_sheets():
+            for property_, value in self.__class__._worksheet_protection.items():
+                setattr(worksheet.protection, property_, value)
+
     def save(self) -> None:
         """ Save self._workbook at self._workbook_path."""
 
         self._metadata_writer.write_indices_last_date()
+
+        self._protect_all_sheets()
 
         self._workbook.save(self._workbook_path)
