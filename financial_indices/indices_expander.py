@@ -156,18 +156,20 @@ class IndicesExpander:
         if not financial_records:
             return []
 
-        last_date = financial_records[-1].date
+        last_date = financial_records[-1].date.replace(day=1)
         last_value = financial_records[-1].value
-        last_month = last_date.month
-        next_month = (last_month + 1) % 12 or 12
-        new_date = last_date.replace(month=next_month, day=1)
+        next_month = (last_date.month + 1) % 12 or 12
+        new_date = last_date.replace(month=next_month)
 
         api = FinancialIndicesApi()
         api.set_indices_records({7478: (last_date, None)})
 
-        if api[7478] and api[7478][0].date == new_date:
-            record = [api[7478][0]]
-        else:
+        try:
+            if api[7478][0].date == last_date:
+                record = [IndicesRecord({'date': new_date, 'value': api[7478][0].value})]
+            else:
+                raise IndexError
+        except IndexError:
             record = [IndicesRecord({'date': new_date, 'value': last_value})]
 
         return financial_records + record
