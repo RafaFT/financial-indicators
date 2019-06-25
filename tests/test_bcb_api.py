@@ -551,7 +551,7 @@ class TestRmRecordsOutsideRange(unittest.TestCase):
 
 
 class TestGetLatestDateTwoFields(unittest.TestCase):
-    """ Class to test _get_latest_date() method from the FinancialIndicesApi
+    """ Class to test get_latest_date() method from the FinancialIndicesApi
     class.
     """
     def setUp(self) -> None:
@@ -577,7 +577,7 @@ class TestGetLatestDateTwoFields(unittest.TestCase):
     def test_non_existing_indices(self):
         """ When a non-existing indices is searched, it should return None."""
         expected = None
-        actual = self.bcb_api._get_latest_date(1)
+        actual = self.bcb_api.get_latest_date(1)
 
         self.assertEqual(expected, actual)
 
@@ -585,29 +585,29 @@ class TestGetLatestDateTwoFields(unittest.TestCase):
         """ If an indices do exist, but it doesn't have a value, it should
         return None."""
         expected = None
-        actual = self.bcb_api._get_latest_date(12)
+        actual = self.bcb_api.get_latest_date(12)
 
         self.assertEqual(expected, actual)
 
     def test_indices_with_single_record(self):
-        """ _get_latest_date() should return the date of the latest record,
+        """ get_latest_date() should return the date of the latest record,
         even if that indices has only one record.
         """
         expected = datetime.date(1987, 4, 1)
-        actual = self.bcb_api._get_latest_date(433)
+        actual = self.bcb_api.get_latest_date(433)
 
         self.assertEqual(expected, actual)
 
     def test_indices_with_multiple_records(self):
-        """ _get_latest_date() should return the date of the latest record."""
+        """ get_latest_date() should return the date of the latest record."""
         expected = datetime.date(2005, 9, 30)
-        actual = self.bcb_api._get_latest_date(11)
+        actual = self.bcb_api.get_latest_date(11)
 
         self.assertEqual(expected, actual)
 
 
 class TestGetLatestDateThreeFields(unittest.TestCase):
-    """ Class to test _get_latest_date() method from the FinancialIndicesApi
+    """ Class to test get_latest_date() method from the FinancialIndicesApi
     class.
     """
     def setUp(self) -> None:
@@ -634,7 +634,7 @@ class TestGetLatestDateThreeFields(unittest.TestCase):
     def test_non_existing_indices(self):
         """ When a non-existing indices is searched, it should return None."""
         expected = None
-        actual = self.bcb_api._get_latest_date(1)
+        actual = self.bcb_api.get_latest_date(1)
 
         self.assertEqual(expected, actual)
 
@@ -642,23 +642,23 @@ class TestGetLatestDateThreeFields(unittest.TestCase):
         """ If an indices do exist, but it doesn't have a value, it should
         return None."""
         expected = None
-        actual = self.bcb_api._get_latest_date(25)
+        actual = self.bcb_api.get_latest_date(25)
 
         self.assertEqual(expected, actual)
 
     def test_indices_with_single_record(self):
-        """ _get_latest_date() should return the date of the latest record,
+        """ get_latest_date() should return the date of the latest record,
         even if that indices has only one record.
         """
         expected = datetime.date(1998, 3, 30)
-        actual = self.bcb_api._get_latest_date(253)
+        actual = self.bcb_api.get_latest_date(253)
 
         self.assertEqual(expected, actual)
 
     def test_indices_with_multiple_records(self):
-        """ _get_latest_date() should return the date of the latest record."""
+        """ get_latest_date() should return the date of the latest record."""
         expected = datetime.date(1991, 2, 5)
-        actual = self.bcb_api._get_latest_date(226)
+        actual = self.bcb_api.get_latest_date(226)
 
         self.assertEqual(expected, actual)
 
