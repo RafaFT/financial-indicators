@@ -13,7 +13,7 @@ from bcb_api import (FinancialIndicesApi,
 from workdays import Workdays
 
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('__main__.' + __name__)
 
 
 class IndicesExpander:
@@ -58,29 +58,39 @@ class IndicesExpander:
 
     def _get_next_days(self, start_date: datetime.date, end_date: datetime.date
                        ) -> Tuple[datetime.date, datetime.date]:
-        """ Return the corresponding next couple of dates (date and end_date)
-        according to the rules followed by financial indices with two dates,
-        such as 226.
+        """ Indices like TR (cod=226), have two days in a record, and a special
+        rule to determine the next couple of days following them. This method
+        is intended to receive those two dates, and return the next days.
 
-        :param start_date:
-        :param end_date:
-        :return:
+        :param start_date: The 'date' attribute of a DAY_RECORD from financial
+            code like 226.
+        :param end_date: The 'end_date' attribute of the same DAY_RECORD.
+        :return: Tuple of dates.
         """
 
         if start_date >= end_date:
+            logger.warning(f'Invalid arguments: start_date={start_date} - '
+                           f'end_date={end_date}')
             raise ValueError("end_date can't be lower or equal to start_date")
 
-        increment = datetime.timedelta(days=1)
+        log_start_date = start_date
+        log_end_date = end_date
+
+        one_day = datetime.timedelta(days=1)
 
         if start_date.day == end_date.day:
-            start_date += increment
-            end_date += increment
+            start_date += one_day
+            end_date += one_day
         elif start_date.day == 1:
-            end_date += increment
+            end_date += one_day
         elif end_date.day == 1:
-            start_date += increment
+            start_date += one_day
         else:
-            raise ValueError('Invalid input values')
+            logger.warning(f'Invalid arguments: start_date={start_date} - '
+                           f'end_date={end_date}')
+            raise ValueError('Inconsistent input dates')
+
+        logger.debug(f'({log_start_date}, {log_end_date}) -> ({start_date}, {end_date})')
 
         return start_date, end_date
 
@@ -107,6 +117,9 @@ class IndicesExpander:
 
         extra_records = [IndicesRecord({'date': day, 'value': value})
                          for day in extra_workdays]
+
+        msg = f'Expanding {last_date} with: {[record.date for record in extra_records]}'
+        logger.debug(msg)
 
         return financial_records + extra_records
 
@@ -140,6 +153,9 @@ class IndicesExpander:
             )
             extra_records.append(record)
 
+        msg = f'Expanding {date} with: {[(record.date, record.end_date) for record in extra_records]}'
+        logger.debug(msg)
+
         return financial_records + extra_records
 
     def _ipca_from_15_expander(self, financial_records: RECORDS
@@ -172,6 +188,8 @@ class IndicesExpander:
         except IndexError:
             record = [IndicesRecord({'date': new_date, 'value': last_value})]
 
+        logger.debug(f'Expanding {last_date} with: {record}')
+
         return financial_records + record
 
     def set_expanded_indices(self, indices_code: int,
@@ -185,6 +203,8 @@ class IndicesExpander:
         :param financial_records: Sequence of IndicesRecords to be expanded.
         :return: None.
         """
+
+        logger.info(f'Expanding indices code {indices_code}')
 
         method = self._expander_methods_mapping[indices_code]
 
