@@ -22,7 +22,7 @@ RAW_JSON = Union[List[Dict[str, str]], List]
 # Constant
 TODAY = datetime.date.today().strftime('%d/%m/%Y')
 
-logger = logging.getLogger()
+logger = logging.getLogger('__main__.' + __name__)
 
 
 class IndicesRecord:
@@ -54,7 +54,7 @@ class IndicesRecord:
 
 class FinancialIndicesApi:
     """ Dict like class, responsible for accessing, retrieving and storing
-    financial indices data from Brazil Central Bank (BCB) API.
+    financial indices data from Brazil's Central Bank (BCB) API.
 
     Indices data are stored in private instance field '_indices_records', as
     a dict.
@@ -66,7 +66,7 @@ class FinancialIndicesApi:
                      'codigo_serie}/dados?formato=json&dataInicial={'
                      'dataInicial}&dataFinal={dataFinal}')
 
-    def __init__(self, cod_start_date: COD_DATE = None) -> None:
+    def __init__(self) -> None:
         """ Initialize instance of FinancialIndicesApi."""
 
         self._arguments = {}
@@ -128,12 +128,12 @@ class FinancialIndicesApi:
                                               )
 
     def _get_json_results(self, api_url: str) -> RAW_JSON:
-        """ Makes request to _api_url and return the result if no error
+        """ Makes request to api_url and return the result if no error
         occurred.
 
         :param api_url: String of the url that is requested.
-        :return: Response of the request.
         :raise: requests.HTTPError.
+        :return: Response of the request.
         """
 
         response = requests.get(api_url)
@@ -141,10 +141,10 @@ class FinancialIndicesApi:
         try:
             response.raise_for_status()
         except requests.HTTPError as e:
-            logger.exception(f'Could not complete request to: \n{api_url}')
+            logger.exception(f'Request error from: \n{api_url}')
             raise e
         else:
-            logger.debug(f'Successful request to: \n{api_url}')
+            logger.debug(f'Request successful from: \n{api_url}')
 
         return response.json()
 
@@ -215,7 +215,7 @@ class FinancialIndicesApi:
         return new_records_array
 
     def get_latest_date(self, indices_code: int) -> Optional[datetime.date]:
-        """ Return the date of the latest IndicesRecord record from
+        """ Return the date of the latest IndicesRecord from
         self._indices_records[indices_code].
 
         Return None if self doesn't have records for the indices_code or
@@ -251,6 +251,8 @@ class FinancialIndicesApi:
             If both dates are None, all available records from the indices are
                 retrieved.
         """
+
+        logger.info(f'api request on: {cod_start_date}')
 
         if cod_start_date is None:
             return
