@@ -56,6 +56,40 @@ class IndicesExpander:
     def __getattr__(self, item):
         return getattr(self._expanded_indices_records, item)
 
+    @staticmethod
+    def get_next_month(month: int) -> int:
+        """ Return the integer corresponding to the next month of the month
+        provided.
+
+        Precondition: 1 <= month <= 12
+
+        :param month: Integer of a month (1-12).
+        :return: The integer of the next month.
+        """
+
+        if not 1 <= month <= 12:
+            raise ValueError(f'Invalid argument: month={month}')
+
+        return (month + 1) % 12 or 12
+
+    def is_same_date_month_ahead(self, date1: datetime.date, date2: datetime.date) -> bool:
+        """ Return True if date2 is equal to date1, but exactly one month ahead,
+        False otherwise.
+
+        :param date1: Date.
+        :param date2: Date.
+        :return: True if date2 is month ahead of date1.
+        """
+
+        next_month = self.get_next_month(date1.month)
+        next_year = date1.year if next_month != 1 else date1.year + 1
+        try:
+            new_date = datetime.date(year=next_year, month=next_month, day=date1.day)
+        except ValueError:
+            return False
+
+        return new_date == date2
+
     def _get_next_days(self, start_date: datetime.date, end_date: datetime.date
                        ) -> Tuple[datetime.date, datetime.date]:
         """ Indices like TR (cod=226), have two days in a record, and a special
@@ -78,7 +112,7 @@ class IndicesExpander:
 
         one_day = datetime.timedelta(days=1)
 
-        if start_date.day == end_date.day:
+        if self.is_same_date_month_ahead(start_date, end_date):
             start_date += one_day
             end_date += one_day
         elif start_date.day == 1:
