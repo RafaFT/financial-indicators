@@ -208,8 +208,9 @@ class IndicesExpander:
 
         last_date = financial_records[-1].date.replace(day=1)
         last_value = financial_records[-1].value
-        next_month = (last_date.month + 1) % 12 or 12
-        new_date = last_date.replace(month=next_month)
+        next_month = self.get_next_month(last_date.month)
+        next_year = last_date.year if next_month != 1 else last_date.year + 1
+        new_date = last_date.replace(month=next_month, year=next_year)
 
         api = FinancialIndicesApi()
         api.set_indices_records({7478: (last_date, None)})
