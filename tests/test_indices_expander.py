@@ -589,6 +589,20 @@ class TestIpcaFrom15Expander(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.expander._ipca_from_15_expander(input_)
 
+    def test_change_of_year(self):
+        """ If the last date of the input is from month 12, than the new record
+        should be from month 1 of next year."""
+
+        input_ = [
+            self.indices_record(date=datetime.date(2006, 11, 1), value=0.31),
+            self.indices_record(date=datetime.date(2006, 12, 1), value=0.48),
+        ]
+        output = self.expander._ipca_from_15_expander(input_)
+        expected = self.indices_record(date=datetime.date(2007, 1, 1), value=0.35)
+        actual = output[-1]
+
+        self.assertEqual(expected, actual)
+
 
 class TestGetNextMonth(unittest.TestCase):
     """ Class to test method get_next_month()."""
