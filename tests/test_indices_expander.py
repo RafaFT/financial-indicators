@@ -590,5 +590,141 @@ class TestIpcaFrom15Expander(unittest.TestCase):
             self.expander._ipca_from_15_expander(input_)
 
 
+class TestGetNextMonth(unittest.TestCase):
+    """ Class to test method get_next_month()."""
+
+    def setUp(self) -> None:
+        """ Instantiate IndicesExpander for each test."""
+        self.expander = IndicesExpander()
+
+    def test_outside_bottom_range(self):
+        """ If input is below 1, ValueError should be raised."""
+
+        with self.assertRaises(ValueError):
+            self.expander.get_next_month(0)
+
+    def test_outside_top_range(self):
+        """ If input is above 12, ValueError should be raised."""
+
+        with self.assertRaises(ValueError):
+            self.expander.get_next_month(13)
+
+    def test_all_valid_months(self):
+        """ 'Brute force' tests for all possibilities."""
+
+        for expected, month in enumerate(range(1, 12), 2):
+            actual = self.expander.get_next_month(month)
+            self.assertEqual(expected, actual)
+        self.assertEqual(1, self.expander.get_next_month(12))
+
+
+class TestIsSameDateMonthAhead(unittest.TestCase):
+    """ Class to test method is_same_date_month_ahead()."""
+
+    def setUp(self) -> None:
+        """ Instantiate IndicesExpander for each test."""
+        self.expander = IndicesExpander()
+
+    def test_date2_lower_date1(self):
+        """ If date2 is lower than date1, should return False."""
+        date1 = datetime.date(2019, 5, 2)
+        date2 = datetime.date(2019, 5, 1)
+
+        self.assertFalse(self.expander.is_same_date_month_ahead(date1, date2))
+
+    def test_date1_equal_date2(self):
+        """ If both date are the same, return False."""
+        date1 = datetime.date(2014, 11, 29)
+        date2 = datetime.date(2014, 11, 29)
+
+        self.assertFalse(self.expander.is_same_date_month_ahead(date1, date2))
+
+    def test_date1_date_higher_date2_month_days(self):
+        """ In a case where date1 has a day attribute value, higher than the
+        total of days from the next month (ex. January 30-31th from any year),
+        it should return false.
+        """
+        dates1 = (
+            datetime.date(1999, 1, 29),
+            datetime.date(2005, 1, 30),
+            datetime.date(2012, 1, 31),
+            datetime.date(1999, 3, 31),
+            datetime.date(1999, 5, 31),
+            datetime.date(1999, 8, 31),
+        )
+
+        dates2 = (
+            datetime.date(1999, 2, 28),
+            dates1[1] + datetime.timedelta(31),
+            dates1[2] + datetime.timedelta(31),
+            datetime.date(1999, 4, 30),
+            datetime.date(1999, 6, 30),
+            datetime.date(1999, 10, 1),
+        )
+        for date1, date2 in zip(dates1, dates2):
+            self.assertFalse(self.expander.is_same_date_month_ahead(date1, date2))
+
+    def test_leap_years(self):
+        """ In a leap year, Janury 29 should return True."""
+
+        dates1 = (
+            datetime.date(2000, 1, 29),
+            datetime.date(2004, 1, 29),
+            datetime.date(2008, 1, 29),
+            datetime.date(2012, 1, 29),
+            datetime.date(2016, 1, 29),
+            datetime.date(2020, 1, 29),
+            datetime.date(2024, 1, 29),
+        )
+
+        dates2 = (
+            datetime.date(2000, 2, 29),
+            datetime.date(2004, 2, 29),
+            datetime.date(2008, 2, 29),
+            datetime.date(2012, 2, 29),
+            datetime.date(2016, 2, 29),
+            datetime.date(2020, 2, 29),
+            datetime.date(2024, 2, 29),
+        )
+
+        for date1, date2 in zip(dates1, dates2):
+            self.assertTrue(self.expander.is_same_date_month_ahead(date1, date2))
+
+    def test_correct_known_examples(self):
+        """ Testing some examples that should return True."""
+
+        dates1 = (
+            datetime.date(1978, 1, 1),
+            datetime.date(1983, 2, 5),
+            datetime.date(1994, 3, 9),
+            datetime.date(2000, 4, 10),
+            datetime.date(2003, 5, 13),
+            datetime.date(2008, 6, 18),
+            datetime.date(2010, 7, 20),
+            datetime.date(2011, 8, 25),
+            datetime.date(2015, 9, 26),
+            datetime.date(2018, 10, 29),
+            datetime.date(2019, 11, 30),
+            datetime.date(2020, 12, 31),
+        )
+        dates2 = (
+            datetime.date(1978, 2, 1),
+            datetime.date(1983, 3, 5),
+            datetime.date(1994, 4, 9),
+            datetime.date(2000, 5, 10),
+            datetime.date(2003, 6, 13),
+            datetime.date(2008, 7, 18),
+            datetime.date(2010, 8, 20),
+            datetime.date(2011, 9, 25),
+            datetime.date(2015, 10, 26),
+            datetime.date(2018, 11, 29),
+            datetime.date(2019, 12, 30),
+            datetime.date(2021, 1, 31),
+        )
+
+        for date1, date2 in zip(dates1, dates2):
+            self.assertTrue(self.expander.is_same_date_month_ahead(date1, date2))
+
+
 if __name__ == '__main__':
     unittest.main()
