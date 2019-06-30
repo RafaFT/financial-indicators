@@ -30,9 +30,7 @@ if logging_path is not None:
 
 @utils.log_func_time(logger, 20)
 def main():
-    api = bcb_api.FinancialIndicesApi()
-    expander = indices_expander.IndicesExpander()
-    workbook = excel_writer.IndicesWorkbook()
+    logger.info('Starting program...')
 
     working_indices = (
         11,
@@ -40,6 +38,12 @@ def main():
         226,
         433,
     )
+
+    logging.info(f'Trying to create/update indices: {working_indices}')
+
+    api = bcb_api.FinancialIndicesApi()
+    expander = indices_expander.IndicesExpander()
+    workbook = excel_writer.IndicesWorkbook()
 
     for indices_code in working_indices:
         wb_last_date = workbook.get_last_indices_date(indices_code)

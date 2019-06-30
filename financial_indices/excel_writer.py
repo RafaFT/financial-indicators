@@ -390,8 +390,10 @@ class IndicesWorkbook:
 
         try:
             self._workbook = xlsx.load_workbook(self._workbook_path)
+            logger.info(f'Loading worksheet: {self._workbook_path}')
         except FileNotFoundError:
             self._workbook = xlsx.Workbook()
+            logger.info(f'Creating new worksheet: {self._workbook_path}')
             self._delete_all_sheets()
 
         worksheet_metadata = self._create_sheet(-1)
@@ -409,9 +411,8 @@ class IndicesWorkbook:
     def _delete_all_sheets(self) -> None:
         """ Delete all existing worksheets from self._workbook."""
 
-        logger.info('Erasing all worksheets')
         for sheet in self._workbook.sheetnames:
-            logger.debug(f'Erasing worksheet={sheet}')
+            logger.debug(f'Erasing worksheet="{sheet}"')
             del self._workbook[sheet]
 
     def _create_sheet(self, indices_code: int
@@ -477,14 +478,14 @@ class IndicesWorkbook:
         """
 
         name = self.__class__._worksheet_properties[indices_code]['name']
-        logger.info(
-            f'''Writing {len(records)} record(s) to sheet={name} with last date
-                as {last_non_extended_date}
-                ''')
+        writer = self.__class__._worksheet_properties[indices_code]['writer']
 
         ws = self._create_sheet(indices_code)
 
-        writer = self.__class__._worksheet_properties[indices_code]['writer']
+        logger.info(
+            f'''Writing {len(records)} record(s) to sheet="{name}"" with last date
+                as {last_non_extended_date}
+                ''')
 
         writer(ws, records)
         self._metadata_writer.indices_dates[indices_code] = last_non_extended_date
