@@ -1,7 +1,6 @@
 import datetime
 import logging
 from typing import (List,
-                    Iterator,
                     Tuple,
                     )
 
@@ -19,12 +18,9 @@ logger = logging.getLogger('__main__.' + __name__)
 
 @utils.singleton
 class IndicesExpander:
-    """ Dict like class, capable of expanding a financial indices
+    """ Class capable of expanding a financial indices
     RECORDS (see bcb_api) with extra DAY_RECORD objects, based on the
-    financial indices type (11, 12, 433, etc...).
-
-    Indices data is stored in private instance field
-    '_expanded_indices_records'.
+    financial indices code (11, 12, 433, etc...).
     """
 
     def __init__(self) -> None:
@@ -38,25 +34,9 @@ class IndicesExpander:
         }
 
         self._workdays = Workdays()
-        self._expanded_indices_records: INDICES_DATE_VALUES = {}
 
     def __repr__(self) -> str:
         return f'{self.__class__.__name__}()'
-
-    def __len__(self) -> int:
-        return len(self._expanded_indices_records)
-
-    def __contains__(self, item) -> bool:
-        return item in self._expanded_indices_records
-
-    def __getitem__(self, item) -> RECORDS:
-        return self._expanded_indices_records[item]
-
-    def __iter__(self) -> Iterator:
-        return iter(self._expanded_indices_records)
-
-    def __getattr__(self, item):
-        return getattr(self._expanded_indices_records, item)
 
     @staticmethod
     def get_next_month(month: int) -> int:
@@ -229,20 +209,20 @@ class IndicesExpander:
 
         return financial_records + record
 
-    def set_expanded_indices(self, indices_code: int,
+    def get_expanded_indices(self, indices_code: int,
                              financial_records: RECORDS,
-                             ) -> None:
-        """ Expand and stores records based on the indices_code in
-        self._expanded_indices_records.
+                             ) -> RECORDS:
+        """ Expand financial_records based on it's indices_code and return
+        the result.
 
         :param indices_code: Integer representing a financial indices from
             BCB's API.
         :param financial_records: Sequence of IndicesRecords to be expanded.
-        :return: None.
+        :return: Sequence of expanded IndicesRecords.
         """
 
         logger.info(f'Expanding indices code {indices_code}')
 
         method = self._expander_methods_mapping[indices_code]
 
-        self._expanded_indices_records[indices_code] = method(financial_records)
+        return method(financial_records)

@@ -49,8 +49,8 @@ def main():
         if wb_last_date == api_last_date:
             continue
 
-        expander.set_expanded_indices(indices_code, api[indices_code])
-        workbook.write_records(indices_code, expander[indices_code], api_last_date)
+        expanded_indices = expander.get_expanded_indices(indices_code, api[indices_code])
+        workbook.write_records(indices_code, expanded_indices, api_last_date)
 
     workbook.save()
 
