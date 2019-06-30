@@ -39,24 +39,29 @@ def main():
         433,
     )
 
-    logging.info(f'Trying to create/update indices: {working_indices}')
+    logger.info(f'Trying to create/update indices: {working_indices}')
 
     api = bcb_api.FinancialIndicesApi()
     expander = indices_expander.IndicesExpander()
     workbook = excel_writer.IndicesWorkbook()
 
+    updated_indices = False
     for indices_code in working_indices:
         wb_last_date = workbook.get_last_indices_date(indices_code)
         api.set_indices_records({indices_code: (wb_last_date, None)})
         api_last_date = api.get_latest_date(indices_code)
 
         if wb_last_date == api_last_date:
+            logger.info(f'Indices code {indices_code} is up-to-date')
             continue
+        else:
+            logger.info(f'Updating Indices code {indices_code}')
+            updated_indices = True
+            expanded_indices = expander.get_expanded_indices(indices_code, api[indices_code])
+            workbook.write_records(indices_code, expanded_indices, api_last_date)
 
-        expanded_indices = expander.get_expanded_indices(indices_code, api[indices_code])
-        workbook.write_records(indices_code, expanded_indices, api_last_date)
-
-    workbook.save()
+    if updated_indices:
+        workbook.save()
 
 
 if __name__ == '__main__':
