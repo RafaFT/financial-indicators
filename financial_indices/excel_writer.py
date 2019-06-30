@@ -18,9 +18,10 @@ import openpyxl as xlsx
 from bcb_api import (DAY_RECORD,
                      IndicesRecord,
                      RECORDS)
+import utils
 
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('__main__.' + __name__)
 
 
 class WorksheetWriter(metaclass=ABCMeta):
@@ -303,8 +304,10 @@ class MetadataWriter:
     def write_indices_last_date(self) -> None:
         """ Writes self.indices_dates values on self._worksheet."""
 
+        logger.info('Updating Metadata information.')
         row = 2
         for indices, date in sorted(self.indices_dates.items()):
+            logger.debug(f'New latest date for: {indices} -> {date}')
             self._worksheet.cell(row, 1).value = indices
             self._worksheet.cell(row, 2).value = date
             row += 1
@@ -406,7 +409,9 @@ class IndicesWorkbook:
     def _delete_all_sheets(self) -> None:
         """ Delete all existing worksheets from self._workbook."""
 
+        logger.info('Erasing all worksheets')
         for sheet in self._workbook.sheetnames:
+            logger.debug(f'Erasing worksheet={sheet}')
             del self._workbook[sheet]
 
     def _create_sheet(self, indices_code: int
@@ -421,7 +426,9 @@ class IndicesWorkbook:
 
         name = self.__class__._worksheet_properties[indices_code]['name']
         try:
-            return self._workbook[name]
+            ws = self._workbook[name]
+            logger.info(f'Loaded worksheet {name}')
+            return ws
         except KeyError:
             color = self.__class__._worksheet_properties[indices_code]['color']
             state = self.__class__._worksheet_properties[indices_code]['state']
@@ -430,6 +437,8 @@ class IndicesWorkbook:
             ws.title = name
             ws.sheet_properties.tabColor = color
             ws.sheet_state = state
+
+            logger.info(f'Created worksheet {name}')
 
             return ws
 
@@ -443,10 +452,15 @@ class IndicesWorkbook:
         """
 
         try:
-            return self._metadata_writer.indices_dates[indices_code]
+            lastest_date = self._metadata_writer.indices_dates[indices_code]
         except KeyError:
-            return None
+            lastest_date = None
 
+        logger.info(f'Latest date of {indices_code} is {lastest_date}')
+
+        return lastest_date
+
+    @utils.log_func_time(logger, 20)
     def write_records(self, indices_code: int,
                       records: RECORDS,
                       last_non_extended_date: Optional[datetime.date] = None
@@ -461,6 +475,12 @@ class IndicesWorkbook:
             record, and not an extended one.
         :return: None.
         """
+
+        name = self.__class__._worksheet_properties[indices_code]['name']
+        logger.info(
+            f'''Writing {len(records)} record(s) to sheet={name} with last date
+                as {last_non_extended_date}
+                ''')
 
         ws = self._create_sheet(indices_code)
 
@@ -501,11 +521,15 @@ class IndicesWorkbook:
             for property_, value in self.__class__._worksheet_protection.items():
                 setattr(worksheet.protection, property_, value)
 
+    @utils.log_func_time(logger, 20)
     def save(self) -> None:
         """ Save self._workbook at self._workbook_path."""
 
+        logger.info(f'Saving workbook on: {self._workbook_path}')
+
         self._metadata_writer.write_indices_last_date()
 
+        logging.info('Protectiong sheets')
         self._protect_all_sheets()
 
         self._workbook.save(self._workbook_path)

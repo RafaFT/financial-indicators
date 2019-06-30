@@ -1,13 +1,34 @@
 import logging
+import os
 
 import bcb_api
 import excel_writer
 import indices_expander
+import utils
 
 
+# create logger
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+
+# create stream handler
+sh = logging.StreamHandler()
+sh.setLevel(logging.INFO)
+formatter = logging.Formatter(
+    '[%(asctime)s] [%(levelname)s] [%(module)s] [%(funcName)s] [%(lineno)d] [%(message)s]'
+)
+sh.setFormatter(formatter)
+logger.addHandler(sh)
+
+logging_path = utils.create_log_path()
+if logging_path is not None:
+    fh = logging.FileHandler(os.path.join(logging_path, 'logs'), 'w')
+    fh.setLevel(logging.DEBUG)
+    fh.setFormatter(formatter)
+    logger.addHandler(fh)
 
 
+@utils.log_func_time(logger, 20)
 def main():
     api = bcb_api.FinancialIndicesApi()
     expander = indices_expander.IndicesExpander()
@@ -35,12 +56,4 @@ def main():
 
 
 if __name__ == '__main__':
-    import time
-
-    start = time.perf_counter()
-
     main()
-
-    end = time.perf_counter()
-
-    print(end - start)

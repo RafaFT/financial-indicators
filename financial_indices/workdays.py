@@ -11,7 +11,7 @@ from typing import (Any,
                     )
 
 
-logger = logging.getLogger()
+logger = logging.getLogger('__main__.' + __name__)
 
 
 class Workdays:
@@ -64,8 +64,8 @@ class Workdays:
         """ Load all workdays from self._workdays_path (should be a csv file)
         and return days as a tuple of datetime.date.
 
-        :return: Tuple with all workdays availabe.
         :raise: AssertionError.
+        :return: Tuple with all workdays available.
         """
 
         workdays_temp = []
@@ -86,14 +86,14 @@ class Workdays:
         except AssertionError:
             logger.exception(f'The number of workdays in '
                              f'{self.__class__._filename} is incorrect.')
-            raise
+            raise AssertionError
 
-        logger.info('Workdays loaded.')
+        logger.info(f'{self.__class__._number_workdays} Workdays loaded.')
 
         return tuple(workdays_temp)
 
     @staticmethod
-    def binary_search(array: Sequence, element: Any) -> int:
+    def binary_search(array: Sequence[Any], element: Any) -> int:
         """ Binary search algorithm, implemented using the built in bisect
         library.
         Raise LookupError if element is not in array.
@@ -102,8 +102,8 @@ class Workdays:
 
         :param array: Sorted sequence of elements.
         :param element: Element whose index is being searched.
-        :return: Index of element.
         :raise: LookupError.
+        :return: Index of element.
         """
 
         # binary search logic from python docs:
@@ -123,8 +123,8 @@ class Workdays:
 
         :param start_date: Date being searched.
         :param extra_days: Integer representing the number of extra days.
-        :return: Tuple of datetime.date objects.
         :raise: LookupError.
+        :return: Tuple of datetime.date objects.
         """
 
         try:
