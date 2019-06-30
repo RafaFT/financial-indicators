@@ -11,11 +11,13 @@ from bcb_api import (FinancialIndicesApi,
                      RECORDS,
                      )
 from workdays import Workdays
+import utils
 
 
 logger = logging.getLogger('__main__.' + __name__)
 
 
+@utils.singleton
 class IndicesExpander:
     """ Dict like class, capable of expanding a financial indices
     RECORDS (see bcb_api) with extra DAY_RECORD objects, based on the

@@ -10,10 +10,12 @@ from typing import (Any,
                     Tuple,
                     )
 
+import utils
 
 logger = logging.getLogger('__main__.' + __name__)
 
 
+@utils.singleton
 class Workdays:
     """ CLass containing all Brazilian workdays from 2001 to 2078, both
     included.

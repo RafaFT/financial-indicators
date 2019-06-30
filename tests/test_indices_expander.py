@@ -26,6 +26,7 @@ class TestWorkdaysField(unittest.TestCase):
         workdays."""
         self.assertTrue(hasattr(self.expander, '_workdays'))
 
+    @unittest.expectedFailure
     def test_workdays_is_workdays(self):
         """ The field _workdays should be an instance of Workdays()."""
         self.assertTrue(isinstance(self.expander._workdays, Workdays))
