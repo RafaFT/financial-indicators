@@ -384,16 +384,16 @@ class IndicesWorkbook:
         """
 
         if path_to_file is None:
-            path_to_file = os.path.abspath(os.getcwd())
+            path_to_file = os.path.abspath(os.path.dirname(__file__))
 
         self._workbook_path = os.path.join(path_to_file, filename)
 
         try:
+            logger.info(f'Loading workbook: {self._workbook_path}')
             self._workbook = xlsx.load_workbook(self._workbook_path)
-            logger.info(f'Loading worksheet: {self._workbook_path}')
         except FileNotFoundError:
-            self._workbook = xlsx.Workbook()
             logger.info(f'Creating new worksheet: {self._workbook_path}')
+            self._workbook = xlsx.Workbook()
             self._delete_all_sheets()
 
         worksheet_metadata = self._create_sheet(-1)
