@@ -1,5 +1,6 @@
 import logging
 import os
+import sys
 
 import bcb_api
 import excel_writer
@@ -22,10 +23,21 @@ logger.addHandler(sh)
 
 logging_path = utils.create_log_path()
 if logging_path is not None:
-    fh = logging.FileHandler(os.path.join(logging_path, 'logs'), 'w')
+    # Create file handler
+    fh = logging.FileHandler(os.path.join(logging_path, 'financial-indices.log'), 'w')
     fh.setLevel(logging.DEBUG)
     fh.setFormatter(formatter)
     logger.addHandler(fh)
+
+
+def handle_exception(exc_type, exc_value, exc_traceback):
+    """ Function designed to override the sys.excepthook function, which
+    is the last function called before an uncaught exception is raised,
+    and log the exception information before quitting.
+    """
+    logger.critical(
+        "Uncaught exception", exc_info=(exc_type, exc_value, exc_traceback)
+    )
 
 
 @utils.log_func_time(logger, 20)
@@ -39,11 +51,12 @@ def main():
         433,
     )
 
-    logger.info(f'Trying to create/update indices: {working_indices}')
-
     api = bcb_api.FinancialIndicesApi()
     expander = indices_expander.IndicesExpander()
-    workbook = excel_writer.IndicesWorkbook()
+    workbook = excel_writer.IndicesWorkbook(
+        path_to_file=utils.bundle_dir,
+        filename='financial-indices.xlsx'
+    )
 
     updated_indices = False
     for indices_code in working_indices:
@@ -57,12 +70,17 @@ def main():
         else:
             logger.info(f'Updating Indices code {indices_code}')
             updated_indices = True
-            expanded_indices = expander.get_expanded_indices(indices_code, api[indices_code])
-            workbook.write_records(indices_code, expanded_indices, api_last_date)
+            expanded_indices = expander.get_expanded_indices(
+                indices_code, api[indices_code]
+            )
+            workbook.write_records(indices_code,
+                                   expanded_indices,
+                                   api_last_date)
 
     if updated_indices:
         workbook.save()
 
 
 if __name__ == '__main__':
+    sys.excepthook = handle_exception
     main()
