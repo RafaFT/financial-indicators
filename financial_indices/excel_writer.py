@@ -373,7 +373,7 @@ class IndicesWorkbook:
     )
 
     def __init__(self, path_to_file: Optional[str] = None,
-                 filename: str = 'financial_indices.xlsx') -> None:
+                 filename: str = 'financial-indices.xlsx') -> None:
         """ Constructor of a workbook.
         If path_to_file is None, than it is set to the current working directory.
         If filename exists in path_to_file, it is loaded, otherwise a new file
@@ -384,15 +384,17 @@ class IndicesWorkbook:
         """
 
         if path_to_file is None:
-            path_to_file = os.path.abspath(os.path.dirname(__file__))
+            # path_to_file value depends if the program is being run by
+            # a python interpretor or as an executable.
+            path_to_file = utils.bundle_dir
 
         self._workbook_path = os.path.join(path_to_file, filename)
 
-        try:
+        if filename in os.listdir(path_to_file):
             logger.info(f'Loading workbook: {self._workbook_path}')
             self._workbook = xlsx.load_workbook(self._workbook_path)
-        except FileNotFoundError:
-            logger.info(f'Creating new worksheet: {self._workbook_path}')
+        else:
+            logger.info(f'Creating new workbook: {self._workbook_path}')
             self._workbook = xlsx.Workbook()
             self._delete_all_sheets()
 
@@ -497,8 +499,10 @@ class IndicesWorkbook:
         :return: Set of worksheet objects.
         """
 
-        name_to_code = {self.__class__._worksheet_properties[code]['name']: code
-                        for code in self.__class__._worksheet_properties}
+        name_to_code = {
+            self.__class__._worksheet_properties[code]['name']: code
+            for code in self.__class__._worksheet_properties
+        }
         indices_worksheets = set()
 
         for sheet_name in self._workbook.sheetnames:
@@ -530,7 +534,7 @@ class IndicesWorkbook:
 
         self._metadata_writer.write_indices_last_date()
 
-        logging.info('Protectiong sheets')
+        logging.info('Protecting sheets')
         self._protect_all_sheets()
 
         self._workbook.save(self._workbook_path)

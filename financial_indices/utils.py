@@ -2,6 +2,7 @@ import datetime
 import functools
 import logging
 import os
+import sys
 import time
 from typing import (Any,
                     Callable,
@@ -10,6 +11,13 @@ from typing import (Any,
 
 
 logger = logging.getLogger(__name__)
+
+
+# https://pyinstaller.readthedocs.io/en/v3.5/runtime-information.html
+if getattr(sys, 'frozen', False):
+    bundle_dir = os.getcwd()
+else:
+    bundle_dir = os.path.abspath(os.path.dirname(__file__))
 
 
 def log_func_time(logger: logging.Logger, level: int = 20) -> Callable:
@@ -56,7 +64,7 @@ def log_func_time(logger: logging.Logger, level: int = 20) -> Callable:
 
 
 def singleton(class_: Callable) -> Callable:
-    """ Decorator to implement singleton behaviour to a given class.
+    """ Decorator to implement singleton behavior to a given class.
 
     :param class_: Any class.
     :return: Decorated class.
