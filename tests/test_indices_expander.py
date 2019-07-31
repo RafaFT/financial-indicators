@@ -6,7 +6,7 @@ import unittest
 
 path = os.path.dirname(__file__)
 path = os.path.join(path, '..')
-sys.path.append(os.path.abspath(os.path.join(path, 'financial_indices')))
+sys.path.append(os.path.abspath(os.path.join(path, 'financial-indices')))
 
 from workdays import Workdays
 from indices_expander import IndicesExpander
@@ -26,7 +26,8 @@ class TestWorkdaysField(unittest.TestCase):
         workdays."""
         self.assertTrue(hasattr(self.expander, '_workdays'))
 
-    @unittest.expectedFailure
+    @unittest.skip('''This test should fail since Workdays is a singleton
+                   by a decorator implementation''')
     def test_workdays_is_workdays(self):
         """ The field _workdays should be an instance of Workdays()."""
         self.assertTrue(isinstance(self.expander._workdays, Workdays))

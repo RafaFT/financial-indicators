@@ -4,9 +4,12 @@ import unittest
 
 path = os.path.dirname(__file__)
 path = os.path.join(path, '..')
-sys.path.append(os.path.abspath(os.path.join(path, 'financial_indices')))
+sys.path.append(os.path.abspath(os.path.join(path, 'financial-indices')))
 
 from excel_writer import IndicesWorkbook
+
+
+CURRENT_FOLDER = os.path.dirname(__file__)
 
 
 class TestNewIndicesWorkbook(unittest.TestCase):
@@ -15,7 +18,10 @@ class TestNewIndicesWorkbook(unittest.TestCase):
 
     def setUp(self) -> None:
         """ Create an instance of IndicesWorkbook."""
-        self.wb = IndicesWorkbook()
+        # An initial instance of IndicesWorkbook should have a workbook
+        # field with one worksheet ('metadata').
+        self.wb = IndicesWorkbook(path_to_file=CURRENT_FOLDER,
+                                  filename='testing.xlsx')
 
     def tearDown(self) -> None:
         """ Attempt to delete a financial_indices.xlsx file from the current
@@ -26,12 +32,12 @@ class TestNewIndicesWorkbook(unittest.TestCase):
         except FileNotFoundError:
             pass
 
-    def test_initial_workbook_doesnt_have_sheets(self):
-        """ When a new instance, without parameters is called, it should not
-        have any worksheet inside of it.
-        """
+    def test_initial_workbook_has_one_sheet(self):
+        """ When a new instance, without parameters is called, it should
+        have a lonely worksheet named 'metadata' inside of it."""
 
-        self.assertEqual(len(self.wb), 0)
+        self.assertEqual(len(self.wb), 1)
+        self.assertTrue(self.wb._workbook.sheetnames[0] == 'metadata')
 
     def test_delete_all_sheets(self):
         """ When called, _delete_all_sheets() should delete all sheets."""
@@ -40,16 +46,20 @@ class TestNewIndicesWorkbook(unittest.TestCase):
             self.wb._workbook.create_sheet(name)
 
         # Making sure two sheets were created.
-        self.assertEqual(len(self.wb), 2)
+        self.assertEqual(len(self.wb), 3)
 
         self.wb._delete_all_sheets()
 
         self.assertEqual(len(self.wb), 0)
 
     def test_create_sheets(self):
-        """ _create_sheet() should create a worksheet based on integer values,
-        representing a financial indices code.
+        """ _create_sheet() should create a worksheet based on integer
+        values, representing a financial indices code.
         """
+
+        # Delete existing metadata worksheet before this test.
+        self.wb._delete_all_sheets()
+        self.assertEqual(len(self.wb), 0)
 
         for i, indices_code in enumerate(self.wb._worksheet_properties, 1):
             self.wb._create_sheet(indices_code)
@@ -57,7 +67,8 @@ class TestNewIndicesWorkbook(unittest.TestCase):
             # check the number of worksheet and their names.
             self.assertEqual(len(self.wb), i)
             self.assertTrue(
-                self.wb._worksheet_properties[indices_code]['name'] in self.wb._workbook.sheetnames
+                self.wb._worksheet_properties[indices_code]['name']
+                in self.wb._workbook.sheetnames
             )
 
 
@@ -68,7 +79,10 @@ class TestExistingIndicesWorkbook(unittest.TestCase):
 
     def setUp(self) -> None:
         """ Create an instance of IndicesWorkbook and save some data."""
-        self.wb = IndicesWorkbook()
+        # An initial instance of IndicesWorkbook should have a workbook
+        # field with one worksheet ('metadata').
+        self.wb = IndicesWorkbook(path_to_file=CURRENT_FOLDER,
+                                  filename='testing.xlsx')
 
         self.ws = self.wb._create_sheet(11)
         for row in range(1, 101):
@@ -86,8 +100,9 @@ class TestExistingIndicesWorkbook(unittest.TestCase):
 
     def test_delete_all_sheets(self):
         """ When called, _delete_all_sheets() should delete all sheets."""
-        # make sure self.wb has one sheet
-        self.assertEqual(len(self.wb), 1)
+        # self.wb should have two sheets at this moment. The sheet created
+        # from setUp() and the metadata sheet.
+        self.assertEqual(len(self.wb), 2)
 
         self.wb._delete_all_sheets()
 

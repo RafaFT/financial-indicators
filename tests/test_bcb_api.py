@@ -6,7 +6,7 @@ import unittest
 
 path = os.path.dirname(__file__)
 path = os.path.join(path, '..')
-sys.path.append(os.path.abspath(os.path.join(path, 'financial_indices')))
+sys.path.append(os.path.abspath(os.path.join(path, 'financial-indices')))
 
 from bcb_api import FinancialIndicesApi
 
