@@ -1,5 +1,6 @@
 from collections import namedtuple
 import datetime
+import decimal
 import logging
 import requests
 from typing import (Dict,
@@ -13,14 +14,11 @@ from typing import (Dict,
                     )
 
 # Type aliases
-DAY_RECORD = Tuple[Union[datetime.date, float]]
+DAY_RECORD = Tuple[Union[datetime.date, decimal.Decimal]]
 RECORDS = Union[Sequence[DAY_RECORD], Sequence]
 COD_DATE = Mapping[int, Tuple[Optional[datetime.date]]]
 INDICES_DATE_VALUES = Dict[int, RECORDS]
 RAW_JSON = Union[List[Dict[str, str]], List]
-
-# Constant
-TODAY = datetime.date.today().strftime('%d/%m/%Y')
 
 logger = logging.getLogger('__main__.' + __name__)
 
@@ -36,8 +34,8 @@ class IndicesRecord:
         'valor': 'value',
     }
 
-    def __new__(cls, attr_value: Dict[str, Union[datetime.date, float]]
-                ) -> Tuple[Union[datetime.date, float]]:
+    def __new__(cls, attr_value: Dict[str, Union[datetime.date, decimal.Decimal]]
+                ) -> Tuple[Union[datetime.date, decimal.Decimal]]:
 
         mapped_attr_value = {}
         for key, value in sorted(attr_value.items()):
@@ -150,8 +148,8 @@ class FinancialIndicesApi:
 
     def _fix_api_results(self, json_result: RAW_JSON) -> RECORDS:
         """ Each element from json_result (dict) is converted to an
-        IndicesRecord object, with string values converted to either float
-        or datetime.date objects.
+        IndicesRecord object, which stores the numeric values as a Decimal,
+        and dates as datetime.date objects.
 
         :param json_result: List of dict.
         :return: List of IndicesRecord objects.
@@ -163,10 +161,10 @@ class FinancialIndicesApi:
 
         values = []
         for dictionary in json_result:
-            # Every api result dict should always have a 'valor' key, and it's
-            # always a float.
+            # Every api result dict should always have a 'valor' key,
+            # and it's always a Decimal.
             day_record_dict = {
-                'valor': float(dictionary.pop('valor')),
+                'valor': decimal.Decimal(dictionary.pop('valor')),
             }
             # Other keys may have unknown names, but they should be date
             # objects.

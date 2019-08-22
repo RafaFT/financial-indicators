@@ -1,6 +1,7 @@
 from abc import (ABCMeta,
                  abstractmethod)
 import datetime
+import decimal
 import logging
 import os
 from types import MappingProxyType
@@ -40,7 +41,7 @@ class WorksheetWriter(metaclass=ABCMeta):
 
         self._write_records()
 
-    def _get_headers(self) -> Tuple[Union[str, float]]:
+    def _get_headers(self) -> Tuple[str]:
         """ Return the name of the headers. Headers may be text or numbers.
         """
 
@@ -128,7 +129,7 @@ class SelicWriter(WorksheetWriter):
         return super()._get_headers() + ('daily_value',)
 
     def _format_record(self, record: DAY_RECORD
-                       ) -> Tuple[datetime.date, float, float]:
+                       ) -> Tuple[datetime.date, decimal.Decimal, decimal.Decimal]:
         """ Format a record to be appropriate to the worksheet selic.
 
         :param record: IndicesRecord.
@@ -151,7 +152,7 @@ class CdiWriter(WorksheetWriter):
         return super()._get_headers() + ('daily_value',)
 
     def _format_record(self, record: DAY_RECORD
-                       ) -> Tuple[datetime.date, float, float]:
+                       ) -> Tuple[datetime.date, decimal.Decimal, decimal.Decimal]:
         """ Format a record to be appropriate to the worksheet cdi.
 
         :param record: IndicesRecord.
@@ -165,14 +166,14 @@ class CdiWriter(WorksheetWriter):
 
 class IpcaWriter(WorksheetWriter):
 
-    def _get_headers(self) -> Tuple[Union[str, float]]:
+    def _get_headers(self) -> Tuple[str]:
         """ Return the name of the headers. Headers may be string or numbers.
         """
 
         return ('ano', 'mes', 'valor')
 
     def _format_record(self, record: DAY_RECORD
-                       ) -> Iterable[Union[float, datetime.date]]:
+                       ) -> Iterable[Union[int, decimal.Decimal]]:
         """ Format a record to be appropriate to the worksheet ipca.
 
         :param record: IndicesRecord.
@@ -204,7 +205,7 @@ class IpcaWriter(WorksheetWriter):
 
 class TrWriter(WorksheetWriter):
 
-    def _get_headers(self) -> Tuple[Union[str, float]]:
+    def _get_headers(self) -> Tuple[str]:
         """ Return the name of the headers. Headers may be string or numbers.
         """
 

@@ -58,7 +58,7 @@ def main():
         filename='financial-indices.xlsx'
     )
 
-    updated_indices = False
+    updated_indices = False  # was any indices updated?
     for indices_code in working_indices:
         wb_last_date = workbook.get_last_indices_date(indices_code)
         api.set_indices_records({indices_code: (wb_last_date, None)})
