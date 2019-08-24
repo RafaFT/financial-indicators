@@ -4,9 +4,8 @@ from typing import (List,
                     Tuple,
                     )
 
-from bcb_api import (FinancialIndicesApi,
-                     IndicesRecord,
-                     INDICES_DATE_VALUES,
+from bcb_api import (FinancialIndicatorsApi,
+                     IndicatorRecord,
                      RECORDS,
                      )
 from workdays import Workdays
@@ -17,19 +16,19 @@ logger = logging.getLogger('__main__.' + __name__)
 
 
 @utils.singleton
-class IndicesExpander:
-    """ Class capable of expanding a financial indices
+class IndicatorExpander:
+    """ Class capable of expanding a financial indicator
     RECORDS (see bcb_api) with extra DAY_RECORD objects, based on the
-    financial indices code (11, 12, 433, etc...).
+    financial indicator code (11, 12, 433, etc...).
     """
 
     def __init__(self) -> None:
-        """ Initializes instance of IndicesExpander."""
+        """ Initializes instance of IndicatorExpander."""
 
         self._expander_methods_mapping = {
-            11: self._daily_workday_indices_expander,  # Selic
-            12: self._daily_workday_indices_expander,  # CDI
-            226: self._daily_three_field_indices_expander,  # TR
+            11: self._daily_workday_indicator_expander,  # Selic
+            12: self._daily_workday_indicator_expander,  # CDI
+            226: self._daily_three_field_indicator_expander,  # TR
             433: self._ipca_from_15_expander,  # Expand ipca with IPCA-15
         }
 
@@ -74,7 +73,7 @@ class IndicesExpander:
 
     def _get_next_days(self, start_date: datetime.date, end_date: datetime.date
                        ) -> Tuple[datetime.date, datetime.date]:
-        """ Indices like TR (cod=226), have two days in a record, and a special
+        """ Indicator like TR (cod=226), have two days in a record, and a special
         rule to determine the next couple of days following them. This method
         is intended to receive those two dates, and return the next days.
 
@@ -110,17 +109,17 @@ class IndicesExpander:
 
         return start_date, end_date
 
-    def _daily_workday_indices_expander(self, financial_records: RECORDS
-                                        ) -> List[IndicesRecord]:
-        """ Return a list of IndicesRecord where the 'date' attribute of
-        the first IndicesRecord instance is one workday ahead of the
+    def _daily_workday_indicator_expander(self, financial_records: RECORDS
+                                          ) -> List[IndicatorRecord]:
+        """ Return a list of IndicatorRecord where the 'date' attribute of
+        the first IndicatorRecord instance is one workday ahead of the
         'date' of the last instance of financial_records.
 
         The 'value' attribute of the last instance of financial_records
-        is repeated for the extra IndicesRecord's.
+        is repeated for the extra IndicatorRecord's.
 
-        :param financial_records: Sequence of IndicesRecord.
-        :return: List of IndicesRecord.
+        :param financial_records: Sequence of IndicatorRecord.
+        :return: List of IndicatorRecord.
         """
 
         if not financial_records:
@@ -131,7 +130,7 @@ class IndicesExpander:
 
         extra_workdays = self._workdays.get_extra_workdays(last_date)
 
-        extra_records = [IndicesRecord({'date': day, 'value': value})
+        extra_records = [IndicatorRecord({'date': day, 'value': value})
                          for day in extra_workdays]
 
         msg = f'Expanding {last_date} with: {[record.date for record in extra_records]}'
@@ -139,17 +138,17 @@ class IndicesExpander:
 
         return financial_records + extra_records
 
-    def _daily_three_field_indices_expander(self, financial_records: RECORDS
-                                            ) -> List[IndicesRecord]:
-        """ Return a list of IndicesRecord, where the 'date' attribute of the
-        first IndicesRecord is one day ahead of the date of the last record
+    def _daily_three_field_indicator_expander(self, financial_records: RECORDS
+                                              ) -> List[IndicatorRecord]:
+        """ Return a list of IndicatorRecord, where the 'date' attribute of the
+        first IndicatorRecord is one day ahead of the date of the last record
         from financial_records.
 
         The 'value' attribute of the last instance of financial_records is
-        repeated for the extra IndicesRecord's.
+        repeated for the extra IndicatorRecord's.
 
-        :param financial_records: Sequence of IndicesRecord.
-        :return: List of IndicesRecord
+        :param financial_records: Sequence of IndicatorRecord.
+        :return: List of IndicatorRecord
         """
 
         if not financial_records:
@@ -162,7 +161,7 @@ class IndicesExpander:
         extra_records = []
         for _ in range(30):
             date, end_date = self._get_next_days(date, end_date)
-            record = IndicesRecord(
+            record = IndicatorRecord(
                 {'date': date,
                  'end_date': end_date,
                  'value': value}
@@ -175,14 +174,14 @@ class IndicesExpander:
         return financial_records + extra_records
 
     def _ipca_from_15_expander(self, financial_records: RECORDS
-                               ) -> List[IndicesRecord]:
-        """ Return a list of IndicesRecord, where the last item is an extra
+                               ) -> List[IndicatorRecord]:
+        """ Return a list of IndicatorRecord, where the last item is an extra
         record, with the ipca-15 from the next month.
         If ipca-15 is not available, the last record from the input list is
         duplicated, instead.
 
-        :param financial_records: Sequence of IndicesRecord.
-        :return: List of IndicesRecord
+        :param financial_records: Sequence of IndicatorRecord.
+        :return: List of IndicatorRecord
         """
 
         if not financial_records:
@@ -194,35 +193,35 @@ class IndicesExpander:
         next_year = last_date.year if next_month != 1 else last_date.year + 1
         new_date = last_date.replace(month=next_month, year=next_year)
 
-        api = FinancialIndicesApi()
-        api.set_indices_records({7478: (last_date, None)})
+        api = FinancialIndicatorsApi()
+        api.set_indicators_records({7478: (last_date, None)})
 
         try:
             if api[7478][0].date == last_date:
-                record = [IndicesRecord({'date': new_date, 'value': api[7478][0].value})]
+                record = [IndicatorRecord({'date': new_date, 'value': api[7478][0].value})]
             else:
                 raise IndexError
         except IndexError:
-            record = [IndicesRecord({'date': new_date, 'value': last_value})]
+            record = [IndicatorRecord({'date': new_date, 'value': last_value})]
 
         logger.debug(f'Expanding {last_date} with: {record}')
 
         return financial_records + record
 
-    def get_expanded_indices(self, indices_code: int,
-                             financial_records: RECORDS,
-                             ) -> RECORDS:
-        """ Expand financial_records based on it's indices_code and return
+    def get_expanded_indicators(self, indicator_code: int,
+                                financial_records: RECORDS,
+                                ) -> RECORDS:
+        """ Expand financial_records based on it's indicator_code and return
         the result.
 
-        :param indices_code: Integer representing a financial indices from
+        :param indicator_code: Integer representing a financial indicator from
             BCB's API.
-        :param financial_records: Sequence of IndicesRecords to be expanded.
-        :return: Sequence of expanded IndicesRecords.
+        :param financial_records: Sequence of IndicatorRecord's to be expanded.
+        :return: Sequence of expanded IndicatorRecord's.
         """
 
-        logger.info(f'Expanding indices code {indices_code}')
+        logger.info(f'Expanding indicador code {indicator_code}')
 
-        method = self._expander_methods_mapping[indices_code]
+        method = self._expander_methods_mapping[indicator_code]
 
         return method(financial_records)

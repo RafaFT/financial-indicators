@@ -6,23 +6,23 @@ import unittest
 
 path = os.path.dirname(__file__)
 path = os.path.join(path, '..')
-sys.path.append(os.path.abspath(os.path.join(path, 'financial-indices')))
+sys.path.append(os.path.abspath(os.path.join(path, 'financial-indicators')))
 
 from workdays import Workdays
-from indices_expander import IndicesExpander
+from indicators_expander import IndicatorExpander
 
 
 class TestWorkdaysField(unittest.TestCase):
-    """ Class to test the private field _workdays from IndicesExpander."""
+    """ Class to test the private field _workdays from IndicatorExpander."""
 
     def setUp(self) -> None:
-        """ Instantiate IndicesExpander for each test."""
-        self.expander = IndicesExpander()
-        self.indices_record = namedtuple('IndicesRecord',
+        """ Instantiate IndicatorExpander for each test."""
+        self.expander = IndicatorExpander()
+        self.indicator_record = namedtuple('IndicatorRecord',
                                          ('date', 'value'))
 
     def test_workdays_exists(self):
-        """ The instance of IndicesExpander should have a private field for
+        """ The instance of IndicatorExpander should have a private field for
         workdays."""
         self.assertTrue(hasattr(self.expander, '_workdays'))
 
@@ -40,34 +40,34 @@ class TestWorkdaysField(unittest.TestCase):
         self.assertEqual(expected, actual)
 
 
-class TestDailyWorkdayIndicesExpander(unittest.TestCase):
-    """ Class to test the method _daily_workdays_indices_expander().
+class TestDailyWorkdayIndicatorExpander(unittest.TestCase):
+    """ Class to test the method _daily_workdays_indicator_expander().
 
-    This method should receive a sequence of namedtuple (IndicesRecord)
+    This method should receive a sequence of namedtuple (IndicatorRecord)
     and return that sequence expanded with 30 workdays, and the last value
     repeated.
     """
 
     def setUp(self) -> None:
-        """ Instantiate IndicesExpander for each test."""
-        self.expander = IndicesExpander()
-        self.indices_record = namedtuple('IndicesRecord',
+        """ Instantiate IndicatorExpander for each test."""
+        self.expander = IndicatorExpander()
+        self.indicator_record = namedtuple('IndicatorRecord',
                                          ('date', 'value'))
 
     def test_empty_input(self):
         """ An empty list should be returned when an empty list is given."""
         expected = []
-        actual = self.expander._daily_workday_indices_expander([])
+        actual = self.expander._daily_workday_indicator_expander([])
 
         self.assertEqual(expected, actual)
 
     def test_one_item_input(self):
         """ Test to make sure the return has 30 more items."""
         input_ = [
-            self.indices_record(date=datetime.date(2012, 1, 2), value=0.041063),
+            self.indicator_record(date=datetime.date(2012, 1, 2), value=0.041063),
         ]
         expect = 31
-        actual = len(self.expander._daily_workday_indices_expander(input_))
+        actual = len(self.expander._daily_workday_indicator_expander(input_))
 
         self.assertEqual(expect, actual)
 
@@ -76,11 +76,11 @@ class TestDailyWorkdayIndicesExpander(unittest.TestCase):
         indexes as before, in the result output.
         """
         input_ = [
-            self.indices_record(date=datetime.date(2013, 8, 7), value=0.032012),
-            self.indices_record(date=datetime.date(2013, 8, 8), value=0.032012),
-            self.indices_record(date=datetime.date(2013, 8, 9), value=0.032012),
+            self.indicator_record(date=datetime.date(2013, 8, 7), value=0.032012),
+            self.indicator_record(date=datetime.date(2013, 8, 8), value=0.032012),
+            self.indicator_record(date=datetime.date(2013, 8, 9), value=0.032012),
         ]
-        records = self.expander._daily_workday_indices_expander(input_)
+        records = self.expander._daily_workday_indicator_expander(input_)
 
         same_date_values = [record.date == records[index_].date and
                             record.value == records[index_].value
@@ -93,11 +93,11 @@ class TestDailyWorkdayIndicesExpander(unittest.TestCase):
         than the last date given.
         """
         input_ = [
-            self.indices_record(date=datetime.date(2016, 10, 4), value=0.052531),
-            self.indices_record(date=datetime.date(2016, 10, 5), value=0.052531),
-            self.indices_record(date=datetime.date(2016, 10, 6), value=0.052531),
+            self.indicator_record(date=datetime.date(2016, 10, 4), value=0.052531),
+            self.indicator_record(date=datetime.date(2016, 10, 5), value=0.052531),
+            self.indicator_record(date=datetime.date(2016, 10, 6), value=0.052531),
         ]
-        records = self.expander._daily_workday_indices_expander(input_)
+        records = self.expander._daily_workday_indicator_expander(input_)
         increasing_days = [records[index_].date < record.date
                            for index_, record in enumerate(records[1:])]
 
@@ -110,11 +110,11 @@ class TestDailyWorkdayIndicesExpander(unittest.TestCase):
         """
         delta = datetime.timedelta(days=30)
         input_ = [
-            self.indices_record(date=datetime.date(2014, 7, 10), value=0.041063),
-            self.indices_record(date=datetime.date(2014, 7, 11), value=0.041063),
-            self.indices_record(date=datetime.date(2014, 7, 14), value=0.041063),
+            self.indicator_record(date=datetime.date(2014, 7, 10), value=0.041063),
+            self.indicator_record(date=datetime.date(2014, 7, 11), value=0.041063),
+            self.indicator_record(date=datetime.date(2014, 7, 14), value=0.041063),
         ]
-        output = self.expander._daily_workday_indices_expander(input_)
+        output = self.expander._daily_workday_indicator_expander(input_)
         last_input_date = input_[-1].date + delta
         last_output_date = output[-1].date
 
@@ -125,10 +125,10 @@ class TestDailyWorkdayIndicesExpander(unittest.TestCase):
         the last input record.
         """
         input_ = [
-            self.indices_record(date=datetime.date(2012, 1, 18), value=0.041063),
-            self.indices_record(date=datetime.date(2012, 1, 19), value=0.039270),
+            self.indicator_record(date=datetime.date(2012, 1, 18), value=0.041063),
+            self.indicator_record(date=datetime.date(2012, 1, 19), value=0.039270),
         ]
-        output = self.expander._daily_workday_indices_expander(input_)
+        output = self.expander._daily_workday_indicator_expander(input_)
 
         last_value_copied = [input_[-1].value == record.value for record in output[1:]]
 
@@ -137,9 +137,9 @@ class TestDailyWorkdayIndicesExpander(unittest.TestCase):
     def test_no_weekend_dates(self):
         """ No record, from either input or output should have weekend dates."""
         input_ = [
-            self.indices_record(date=datetime.date(2014, 10, 14), value=0.035657),
+            self.indicator_record(date=datetime.date(2014, 10, 14), value=0.035657),
         ]
-        output = self.expander._daily_workday_indices_expander(input_)
+        output = self.expander._daily_workday_indicator_expander(input_)
         no_weekend_dates = [record.date.weekday() < 5 for record in output]
 
         self.assertTrue(all(no_weekend_dates))
@@ -149,20 +149,20 @@ class TestDailyWorkdayIndicesExpander(unittest.TestCase):
         workday date from self._workdays, a LookupError should be raised.
         """
         input_ = [
-            self.indices_record(date=datetime.date(2000, 12, 29), value=0.058366),
+            self.indicator_record(date=datetime.date(2000, 12, 29), value=0.058366),
         ]
         with self.assertRaises(LookupError):
-            self.expander._daily_workday_indices_expander(input_)
+            self.expander._daily_workday_indicator_expander(input_)
 
     def test_outside_workdays_top_range(self):
         """ If the last date of the input is newer than the last available
         workday date from self._workdays, a LookupError should be raised.
         """
         input_ = [
-            self.indices_record(date=datetime.date(2079, 12, 28), value=0.0),
+            self.indicator_record(date=datetime.date(2079, 12, 28), value=0.0),
         ]
         with self.assertRaises(LookupError):
-            self.expander._daily_workday_indices_expander(input_)
+            self.expander._daily_workday_indicator_expander(input_)
 
     def test_half_records_outside_workdays_bottom_range(self):
         """ The only value from the input, whose date needs to be higher than
@@ -171,11 +171,11 @@ class TestDailyWorkdayIndicesExpander(unittest.TestCase):
         """
         input_ = [
             # First record is outside range
-            self.indices_record(date=datetime.date(2000, 12, 29), value=0.058366),
+            self.indicator_record(date=datetime.date(2000, 12, 29), value=0.058366),
             # Second record is inside range
-            self.indices_record(date=datetime.date(2001, 1, 2), value=0.058400),
+            self.indicator_record(date=datetime.date(2001, 1, 2), value=0.058400),
         ]
-        output = self.expander._daily_workday_indices_expander(input_)
+        output = self.expander._daily_workday_indicator_expander(input_)
         expected = 32
         actual = len(output)
 
@@ -187,9 +187,9 @@ class TestDailyWorkdayIndicesExpander(unittest.TestCase):
         self._workdays.
         """
         input_ = [
-            self.indices_record(date=datetime.date(2078, 12, 30), value=0.0),
+            self.indicator_record(date=datetime.date(2078, 12, 30), value=0.0),
         ]
-        output = self.expander._daily_workday_indices_expander(input_)
+        output = self.expander._daily_workday_indicator_expander(input_)
         expected = 1
         actual = len(output)
 
@@ -197,11 +197,11 @@ class TestDailyWorkdayIndicesExpander(unittest.TestCase):
 
 
 class TestGetNextDays(unittest.TestCase):
-    """ Class to test the method _get_next_days() of the IndicesExpander class."""
+    """ Class to test the method _get_next_days() of the IndicatorExpander class."""
 
     def setUp(self) -> None:
-        """ Instantiate IndicesExpander for each test."""
-        self.expander = IndicesExpander()
+        """ Instantiate IndicatorExpander for each test."""
+        self.expander = IndicatorExpander()
 
     def test_simple_case(self):
         """ Example of a simple call."""
@@ -315,31 +315,31 @@ class TestGetNextDays(unittest.TestCase):
             self.expander._get_next_days(*input_)
 
 
-class TestDailyThreeFieldIndicesExpander(unittest.TestCase):
-    """ Class to test the _daily_three_field_indices_expander() method."""
+class TestDailyThreeFieldIndicatorExpander(unittest.TestCase):
+    """ Class to test the _daily_three_field_indicator_expander() method."""
 
     def setUp(self) -> None:
-        """ Instantiate IndicesExpander for each test."""
-        self.expander = IndicesExpander()
-        self.indices_record = namedtuple('IndicesRecord',
+        """ Instantiate IndicatorExpander for each test."""
+        self.expander = IndicatorExpander()
+        self.indicator_record = namedtuple('IndicatorRecord',
                                          ('date', 'end_date', 'value'))
 
     def test_empty_input(self):
         """ An empty list should be returned when an empty list is given."""
         expected = []
-        actual = self.expander._daily_three_field_indices_expander([])
+        actual = self.expander._daily_three_field_indicator_expander([])
 
         self.assertEqual(expected, actual)
 
     def test_one_item_input(self):
         """ Test to make sure the return has 30 more items."""
         input_ = [
-            self.indices_record(date=datetime.date(2008, 12, 30),
+            self.indicator_record(date=datetime.date(2008, 12, 30),
                                 end_date=datetime.date(2009, 1, 30),
                                 value=0.2235)
         ]
         expect = 31
-        actual = len(self.expander._daily_three_field_indices_expander(input_))
+        actual = len(self.expander._daily_three_field_indicator_expander(input_))
 
         self.assertEqual(expect, actual)
 
@@ -348,14 +348,14 @@ class TestDailyThreeFieldIndicesExpander(unittest.TestCase):
         indexes as before, in the result output.
         """
         input_ = [
-            self.indices_record(date=datetime.date(2008, 6, 26),
+            self.indicator_record(date=datetime.date(2008, 6, 26),
                                 end_date=datetime.date(2008, 7, 26),
                                 value=0.1664),
-            self.indices_record(date=datetime.date(2008, 6, 27),
+            self.indicator_record(date=datetime.date(2008, 6, 27),
                                 end_date=datetime.date(2008, 7, 27),
                                 value=0.1363),
         ]
-        records = self.expander._daily_three_field_indices_expander(input_)
+        records = self.expander._daily_three_field_indicator_expander(input_)
 
         same_date_values = [record.date == records[index_].date and
                             record.end_date == records[index_].end_date and
@@ -369,14 +369,14 @@ class TestDailyThreeFieldIndicesExpander(unittest.TestCase):
         higher or equal than the last date given.
         """
         input_ = [
-            self.indices_record(date=datetime.date(2014, 2, 24),
+            self.indicator_record(date=datetime.date(2014, 2, 24),
                                 end_date=datetime.date(2014, 3, 24),
                                 value=0.0000),
-            self.indices_record(date=datetime.date(2014, 2, 25),
+            self.indicator_record(date=datetime.date(2014, 2, 25),
                                 end_date=datetime.date(2014, 3, 25),
                                 value=0.0007),
         ]
-        records = self.expander._daily_three_field_indices_expander(input_)
+        records = self.expander._daily_three_field_indicator_expander(input_)
         increasing_days = [records[index_].date <= record.date and
                            records[index_].end_date <= record.end_date
                            for index_, record in enumerate(records[1:])]
@@ -388,17 +388,17 @@ class TestDailyThreeFieldIndicesExpander(unittest.TestCase):
         the last input record.
         """
         input_ = [
-            self.indices_record(date=datetime.date(2006, 9, 9),
+            self.indicator_record(date=datetime.date(2006, 9, 9),
                                 end_date=datetime.date(2006, 10, 9),
                                 value=0.1576),
-            self.indices_record(date=datetime.date(2006, 9, 10),
+            self.indicator_record(date=datetime.date(2006, 9, 10),
                                 end_date=datetime.date(2006, 10, 10),
                                 value=0.1890),
-            self.indices_record(date=datetime.date(2006, 9, 11),
+            self.indicator_record(date=datetime.date(2006, 9, 11),
                                 end_date=datetime.date(2006, 10, 11),
                                 value=0.2244),
         ]
-        output = self.expander._daily_three_field_indices_expander(input_)
+        output = self.expander._daily_three_field_indicator_expander(input_)
 
         last_value_copied = [input_[-1].value == record.value for record in output[2:]]
 
@@ -409,11 +409,11 @@ class TestDailyThreeFieldIndicesExpander(unittest.TestCase):
         point to the the end_date of March the 1º.
         """
         input_ = [
-            self.indices_record(date=datetime.date(1993, 1, 28),
+            self.indicator_record(date=datetime.date(1993, 1, 28),
                                 end_date=datetime.date(1993, 2, 28),
                                 value=29.4691),
         ]
-        output = self.expander._daily_three_field_indices_expander(input_)
+        output = self.expander._daily_three_field_indicator_expander(input_)
 
         expected = [(datetime.date(1993, 1, 28), datetime.date(1993, 2, 28)),
                     (datetime.date(1993, 1, 29), datetime.date(1993, 3, 1)),
@@ -431,11 +431,11 @@ class TestDailyThreeFieldIndicesExpander(unittest.TestCase):
         the the end_date of March the 1º.
         """
         input_ = [
-            self.indices_record(date=datetime.date(1996, 1, 28),
+            self.indicator_record(date=datetime.date(1996, 1, 28),
                                 end_date=datetime.date(1996, 2, 28),
                                 value=1.1415),
         ]
-        output = self.expander._daily_three_field_indices_expander(input_)
+        output = self.expander._daily_three_field_indicator_expander(input_)
 
         expected = [(datetime.date(1996, 1, 28), datetime.date(1996, 2, 28)),
                     (datetime.date(1996, 1, 29), datetime.date(1996, 2, 29)),
@@ -453,11 +453,11 @@ class TestDailyThreeFieldIndicesExpander(unittest.TestCase):
         twice, for both the day 31 and 1.
         """
         input_ = [
-            self.indices_record(date=datetime.date(2000, 5, 30),
+            self.indicator_record(date=datetime.date(2000, 5, 30),
                                 end_date=datetime.date(2000, 6, 30),
                                 value=0.2568),
         ]
-        output = self.expander._daily_three_field_indices_expander(input_)
+        output = self.expander._daily_three_field_indicator_expander(input_)
 
         expected = [(datetime.date(2000, 5, 30), datetime.date(2000, 6, 30)),
                     (datetime.date(2000, 5, 31), datetime.date(2000, 7, 1)),
@@ -473,11 +473,11 @@ class TestDailyThreeFieldIndicesExpander(unittest.TestCase):
         is a change of the year.
         """
         input_ = [
-            self.indices_record(date=datetime.date(2005, 12, 29),
+            self.indicator_record(date=datetime.date(2005, 12, 29),
                                 end_date=datetime.date(2006, 1, 29),
                                 value=0.2276),
         ]
-        output = self.expander._daily_three_field_indices_expander(input_)
+        output = self.expander._daily_three_field_indicator_expander(input_)
 
         expected = [(datetime.date(2005, 12, 29), datetime.date(2006, 1, 29)),
                     (datetime.date(2005, 12, 30), datetime.date(2006, 1, 30)),
@@ -494,15 +494,15 @@ class TestDailyThreeFieldIndicesExpander(unittest.TestCase):
 class TestIpcaFrom15Expander(unittest.TestCase):
     """ Class to test the method _ipca_from_15_expander().
 
-    This method should receive a sequence of namedtuple (IndicesRecord)
+    This method should receive a sequence of namedtuple (IndicatorRecord)
     and return that sequence expanded with one extra namedtuple, corresponding
     to the next month ipca, from ipca-15.
     """
 
     def setUp(self) -> None:
-        """ Instantiate IndicesExpander for each test."""
-        self.expander = IndicesExpander()
-        self.indices_record = namedtuple('IndicesRecord',
+        """ Instantiate IndicatorExpander for each test."""
+        self.expander = IndicatorExpander()
+        self.indicator_record = namedtuple('IndicatorRecord',
                                          ('date', 'value'))
 
     def test_empty_input(self):
@@ -515,7 +515,7 @@ class TestIpcaFrom15Expander(unittest.TestCase):
     def test_one_item_input(self):
         """ Test to make sure the return has 30 more items."""
         input_ = [
-            self.indices_record(date=datetime.date(1984, 2, 1), value=9.50),
+            self.indicator_record(date=datetime.date(1984, 2, 1), value=9.50),
         ]
         expected = 2
         actual = len(self.expander._ipca_from_15_expander(input_))
@@ -527,9 +527,9 @@ class TestIpcaFrom15Expander(unittest.TestCase):
         indexes as before, in the result output.
         """
         input_ = [
-            self.indices_record(date=datetime.date(1998, 5, 1), value=0.50),
-            self.indices_record(date=datetime.date(1998, 6, 1), value=0.02),
-            self.indices_record(date=datetime.date(1998, 7, 1), value=-0.12),
+            self.indicator_record(date=datetime.date(1998, 5, 1), value=0.50),
+            self.indicator_record(date=datetime.date(1998, 6, 1), value=0.02),
+            self.indicator_record(date=datetime.date(1998, 7, 1), value=-0.12),
         ]
         records = self.expander._ipca_from_15_expander(input_)
 
@@ -544,9 +544,9 @@ class TestIpcaFrom15Expander(unittest.TestCase):
         record from the input.
         """
         input_ = [
-            self.indices_record(date=datetime.date(2004, 11, 1), value=0.69),
-            self.indices_record(date=datetime.date(2004, 12, 1), value=0.86),
-            self.indices_record(date=datetime.date(2005, 1, 1), value=0.58),
+            self.indicator_record(date=datetime.date(2004, 11, 1), value=0.69),
+            self.indicator_record(date=datetime.date(2004, 12, 1), value=0.86),
+            self.indicator_record(date=datetime.date(2005, 1, 1), value=0.58),
         ]
         records = self.expander._ipca_from_15_expander(input_)
 
@@ -555,8 +555,8 @@ class TestIpcaFrom15Expander(unittest.TestCase):
     def test_output_day(self):
         """ The day of the new record must always be equal to 1."""
         input_ = [
-            self.indices_record(date=datetime.date(2011, 1, 1), value=0.83),
-            self.indices_record(date=datetime.date(2011, 2, 1), value=0.80),
+            self.indicator_record(date=datetime.date(2011, 1, 1), value=0.83),
+            self.indicator_record(date=datetime.date(2011, 2, 1), value=0.80),
         ]
         output = self.expander._ipca_from_15_expander(input_)
 
@@ -564,17 +564,17 @@ class TestIpcaFrom15Expander(unittest.TestCase):
 
     def test_outside_bottom_range(self):
         """ If the last date of the input cannot be properly completed by the
-        first available date for the indices ipca-15, the value of the last
+        first available date for the indicator ipca-15, the value of the last
         record from the input should be repeated.
 
         The first record for ipca-15 is datetime.date(2000, 5, 1).
         """
         input_ = [
-            self.indices_record(date=datetime.date(2000, 2, 1), value=0.13),
-            self.indices_record(date=datetime.date(2000, 3, 1), value=0.22),
+            self.indicator_record(date=datetime.date(2000, 2, 1), value=0.13),
+            self.indicator_record(date=datetime.date(2000, 3, 1), value=0.22),
         ]
         output = self.expander._ipca_from_15_expander(input_)
-        expected = self.indices_record(date=datetime.date(2000, 4, 1), value=0.22)
+        expected = self.indicator_record(date=datetime.date(2000, 4, 1), value=0.22)
         actual = output[-1]
 
         self.assertEqual(expected, actual)
@@ -586,7 +586,7 @@ class TestIpcaFrom15Expander(unittest.TestCase):
         today = datetime.date.today()
         month_ahead = today + datetime.timedelta(31)
         input_ = [
-            self.indices_record(date=month_ahead, value=0.0),
+            self.indicator_record(date=month_ahead, value=0.0),
         ]
         with self.assertRaises(ValueError):
             self.expander._ipca_from_15_expander(input_)
@@ -596,11 +596,11 @@ class TestIpcaFrom15Expander(unittest.TestCase):
         should be from month 1 of next year."""
 
         input_ = [
-            self.indices_record(date=datetime.date(2006, 11, 1), value=0.31),
-            self.indices_record(date=datetime.date(2006, 12, 1), value=0.48),
+            self.indicator_record(date=datetime.date(2006, 11, 1), value=0.31),
+            self.indicator_record(date=datetime.date(2006, 12, 1), value=0.48),
         ]
         output = self.expander._ipca_from_15_expander(input_)
-        expected = self.indices_record(date=datetime.date(2007, 1, 1), value=0.35)
+        expected = self.indicator_record(date=datetime.date(2007, 1, 1), value=0.35)
         actual = output[-1]
 
         self.assertEqual(expected, actual)
@@ -610,8 +610,8 @@ class TestGetNextMonth(unittest.TestCase):
     """ Class to test method get_next_month()."""
 
     def setUp(self) -> None:
-        """ Instantiate IndicesExpander for each test."""
-        self.expander = IndicesExpander()
+        """ Instantiate IndicatorExpander for each test."""
+        self.expander = IndicatorExpander()
 
     def test_outside_bottom_range(self):
         """ If input is below 1, ValueError should be raised."""
@@ -638,8 +638,8 @@ class TestIsSameDateMonthAhead(unittest.TestCase):
     """ Class to test method is_same_date_month_ahead()."""
 
     def setUp(self) -> None:
-        """ Instantiate IndicesExpander for each test."""
-        self.expander = IndicesExpander()
+        """ Instantiate IndicatorExpander for each test."""
+        self.expander = IndicatorExpander()
 
     def test_date2_lower_date1(self):
         """ If date2 is lower than date1, should return False."""

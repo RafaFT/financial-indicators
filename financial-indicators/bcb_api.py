@@ -17,14 +17,14 @@ from typing import (Dict,
 DAY_RECORD = Tuple[Union[datetime.date, decimal.Decimal]]
 RECORDS = Union[Sequence[DAY_RECORD], Sequence]
 COD_DATE = Mapping[int, Tuple[Optional[datetime.date]]]
-INDICES_DATE_VALUES = Dict[int, RECORDS]
+INDICATORS_DATE_VALUES = Dict[int, RECORDS]
 RAW_JSON = Union[List[Dict[str, str]], List]
 
 logger = logging.getLogger('__main__.' + __name__)
 
 
-class IndicesRecord:
-    """ namedtuple class to represent a single financial indices
+class IndicatorRecord:
+    """ namedtuple class to represent a single financial indicator
     record.
     """
 
@@ -46,18 +46,18 @@ class IndicesRecord:
             else:
                 mapped_attr_value[new_key] = value
 
-        return namedtuple('IndicesRecord', mapped_attr_value.keys()
+        return namedtuple('IndicatorRecord', mapped_attr_value.keys()
                           )(*mapped_attr_value.values())
 
 
-class FinancialIndicesApi:
+class FinancialIndicatorsApi:
     """ Dict like class, responsible for accessing, retrieving and storing
-    financial indices data from Brazil's Central Bank (BCB) API.
+    financial indicators data from Brazil's Central Bank (BCB) API.
 
-    Indices data are stored in private instance field '_indices_records', as
+    indicator data are stored in private instance field '_indicators_records', as
     a dict.
 
-    '_indices_records' is filled by calling the method 'set_indices_records'.
+    '_indicators_records' is filled by calling the method 'set_indicators_records'.
     """
 
     _api_url: str = ('http://api.bcb.gov.br/dados/serie/bcdata.sgs.{'
@@ -65,29 +65,29 @@ class FinancialIndicesApi:
                      'dataInicial}&dataFinal={dataFinal}')
 
     def __init__(self) -> None:
-        """ Initialize instance of FinancialIndicesApi."""
+        """ Initialize instance of FinancialIndicatorsApi."""
 
         self._arguments = {}
-        self._indices_records: INDICES_DATE_VALUES = {}
+        self._indicators_records: INDICATORS_DATE_VALUES = {}
 
     def __repr__(self) -> str:
         return ('{}({})'
                 .format(self.__class__.__name__, self._arguments))
 
     def __len__(self) -> int:
-        return len(self._indices_records)
+        return len(self._indicators_records)
 
     def __contains__(self, item) -> bool:
-        return item in self._indices_records
+        return item in self._indicators_records
 
     def __getitem__(self, item) -> RECORDS:
-        return self._indices_records[item]
+        return self._indicators_records[item]
 
     def __iter__(self) -> Iterator:
-        return iter(self._indices_records)
+        return iter(self._indicators_records)
 
     def __getattr__(self, item):
-        return getattr(self._indices_records, item)
+        return getattr(self._indicators_records, item)
 
     def _create_api_url(self, api_code: int,
                         start_date: Optional[datetime.date] = None,
@@ -103,7 +103,7 @@ class FinancialIndicesApi:
         The reason end_date receives a value when empty, is to possibly limit
         the query in case start_date was provided.
 
-        :param api_code: Integer representing a financial indices.
+        :param api_code: Integer representing a financial indicator.
         :param start_date: The initial date to query for the financial records.
         :param end_date: The last date to query.
         :return: String to be used in a query to the API.
@@ -148,11 +148,11 @@ class FinancialIndicesApi:
 
     def _fix_api_results(self, json_result: RAW_JSON) -> RECORDS:
         """ Each element from json_result (dict) is converted to an
-        IndicesRecord object, which stores the numeric values as a Decimal,
+        IndicatorRecord object, which stores the numeric values as a Decimal,
         and dates as datetime.date objects.
 
         :param json_result: List of dict.
-        :return: List of IndicesRecord objects.
+        :return: List of IndicatorRecord objects.
         """
 
         # If json_result was empty, simply return it.
@@ -172,7 +172,7 @@ class FinancialIndicesApi:
                 date = datetime.datetime.strptime(value, r'%d/%m/%Y').date()
                 day_record_dict[key] = date
 
-            day_record = IndicesRecord(day_record_dict)
+            day_record = IndicatorRecord(day_record_dict)
             values.append(day_record)
 
         return values
@@ -212,41 +212,41 @@ class FinancialIndicesApi:
 
         return new_records_array
 
-    def get_latest_date(self, indices_code: int) -> Optional[datetime.date]:
-        """ Return the date of the latest IndicesRecord from
-        self._indices_records[indices_code].
+    def get_latest_date(self, indicator_code: int) -> Optional[datetime.date]:
+        """ Return the date of the latest IndicatorRecord from
+        self._indicators_records[indicator_code].
 
-        Return None if self doesn't have records for the indices_code or
+        Return None if self doesn't have records for the indicator_code or
         if there is no record.
 
-        :param indices_code: Integer representing a financial indices.
-        :return: The last available date of the indices_code, or None
+        :param indicator_code: Integer representing a financial indicator.
+        :return: The last available date of the indicator_code, or None
             if it can't be retrieved.
         """
 
         try:
-            record = self._indices_records[indices_code][-1]
+            record = self._indicators_records[indicator_code][-1]
         except (KeyError, IndexError):
             return None
         else:
             return record.date
 
-    def set_indices_records(self, cod_start_date: COD_DATE) -> None:
-        """ Stores/update the value of self._indices_records with the
-        json result (formatted with IndicesRecord) of a query made to
+    def set_indicators_records(self, cod_start_date: COD_DATE) -> None:
+        """ Stores/update the value of self._indicators_records with the
+        json result (formatted with IndicatorRecord) of a query made to
         the API.
 
         :param cod_start_date: Mapping of integer as keys, representing the
-            financial indices, and a tuple of dates as values, representing the
+            financial indicator, and a tuple of dates as values, representing the
             start and end date.
-            If Both dates are valid, the instance will retrieve that indices
+            If Both dates are valid, the instance will retrieve that indicator
                 (key) records respecting the dates range.
             If start_date (first date) if None, the result will include records
-                from the first available date of that indices up to the end_data
+                from the first available date of that indicator up to the end_data
                 given.
             If end_date (second date) is None, the result will query all records
                 from start_date up to datetime.date.today().
-            If both dates are None, all available records from the indices are
+            If both dates are None, all available records from the indicator are
                 retrieved.
         """
 
@@ -260,7 +260,8 @@ class FinancialIndicesApi:
         for cod, dates in cod_start_date.items():
             url = self._create_api_url(cod, *dates)
             json_response = self._get_json_results(url)
-            indices_records = self._fix_api_results(json_response)
+            indicators_records = self._fix_api_results(json_response)
 
-            self._indices_records[cod] = self._rm_records_outside_range(*dates,
-                                                                        indices_records)
+            self._indicators_records[cod] = self._rm_records_outside_range(
+                *dates,
+                indicators_records)

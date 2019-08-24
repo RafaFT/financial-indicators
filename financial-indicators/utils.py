@@ -91,7 +91,7 @@ def create_log_path() -> Optional[str]:
     """
 
     try:
-        path = os.path.join(os.environ['USERPROFILE'], '.financial_indices')
+        path = os.path.join(os.environ['USERPROFILE'], '.financial_indicator')
     except KeyError:
         return None
 

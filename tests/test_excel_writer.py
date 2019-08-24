@@ -4,27 +4,27 @@ import unittest
 
 path = os.path.dirname(__file__)
 path = os.path.join(path, '..')
-sys.path.append(os.path.abspath(os.path.join(path, 'financial-indices')))
+sys.path.append(os.path.abspath(os.path.join(path, 'financial-indicators')))
 
-from excel_writer import IndicesWorkbook
+from excel_writer import IndicatorsWorkbook
 
 
 CURRENT_FOLDER = os.path.dirname(__file__)
 
 
-class TestNewIndicesWorkbook(unittest.TestCase):
-    """ Class to test the class IndicesWorkbook, whose setUp test methods
-    consists of creating a new, clean instance of IndicesWorkbook."""
+class TestNewIndicatorsWorkbook(unittest.TestCase):
+    """ Class to test the class IndicatorsWorkbook, whose setUp test methods
+    consists of creating a new, clean instance of IndicatorsWorkbook."""
 
     def setUp(self) -> None:
-        """ Create an instance of IndicesWorkbook."""
-        # An initial instance of IndicesWorkbook should have a workbook
+        """ Create an instance of IndicatorsWorkbook."""
+        # An initial instance of IndicatorsWorkbook should have a workbook
         # field with one worksheet ('metadata').
-        self.wb = IndicesWorkbook(path_to_file=CURRENT_FOLDER,
+        self.wb = IndicatorsWorkbook(path_to_file=CURRENT_FOLDER,
                                   filename='testing.xlsx')
 
     def tearDown(self) -> None:
-        """ Attempt to delete a financial_indices.xlsx file from the current
+        """ Attempt to delete a financial_indicators.xlsx file from the current
         working directory.
         """
         try:
@@ -54,35 +54,35 @@ class TestNewIndicesWorkbook(unittest.TestCase):
 
     def test_create_sheets(self):
         """ _create_sheet() should create a worksheet based on integer
-        values, representing a financial indices code.
+        values, representing a financial indicator code.
         """
 
         # Delete existing metadata worksheet before this test.
         self.wb._delete_all_sheets()
         self.assertEqual(len(self.wb), 0)
 
-        for i, indices_code in enumerate(self.wb._worksheet_properties, 1):
-            self.wb._create_sheet(indices_code)
+        for i, indicator_code in enumerate(self.wb._worksheet_properties, 1):
+            self.wb._create_sheet(indicator_code)
 
             # check the number of worksheet and their names.
             self.assertEqual(len(self.wb), i)
             self.assertTrue(
-                self.wb._worksheet_properties[indices_code]['name']
+                self.wb._worksheet_properties[indicator_code]['name']
                 in self.wb._workbook.sheetnames
             )
 
 
-class TestExistingIndicesWorkbook(unittest.TestCase):
-    """ Class to test the class IndicesWorkbook, whose setUp test methods
+class TestExistingIndicatorsWorkbook(unittest.TestCase):
+    """ Class to test the class IndicatorsWorkbook, whose setUp test methods
     consists of both creating a new, and loading a pre-existing instance of
-    IndicesWorkbook."""
+    IndicatorsWorkbook."""
 
     def setUp(self) -> None:
-        """ Create an instance of IndicesWorkbook and save some data."""
-        # An initial instance of IndicesWorkbook should have a workbook
+        """ Create an instance of IndicatorsWorkbook and save some data."""
+        # An initial instance of IndicatorsWorkbook should have a workbook
         # field with one worksheet ('metadata').
-        self.wb = IndicesWorkbook(path_to_file=CURRENT_FOLDER,
-                                  filename='testing.xlsx')
+        self.wb = IndicatorsWorkbook(path_to_file=CURRENT_FOLDER,
+                                     filename='testing.xlsx')
 
         self.ws = self.wb._create_sheet(11)
         for row in range(1, 101):
@@ -90,7 +90,7 @@ class TestExistingIndicesWorkbook(unittest.TestCase):
                 self.ws.cell(row, column).value = row + column
 
     def tearDown(self) -> None:
-        """ Attempt to delete a financial_indices.xlsx file from the current
+        """ Attempt to delete a financial_indicators.xlsx file from the current
         working directory.
         """
         try:

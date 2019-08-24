@@ -4,7 +4,7 @@ import sys
 
 import bcb_api
 import excel_writer
-import indices_expander
+import indicators_expander
 import utils
 
 
@@ -24,7 +24,7 @@ logger.addHandler(sh)
 logging_path = utils.create_log_path()
 if logging_path is not None:
     # Create file handler
-    fh = logging.FileHandler(os.path.join(logging_path, 'financial-indices.log'), 'w')
+    fh = logging.FileHandler(os.path.join(logging_path, 'financial-indicators.log'), 'w')
     fh.setLevel(logging.DEBUG)
     fh.setFormatter(formatter)
     logger.addHandler(fh)
@@ -44,40 +44,40 @@ def handle_exception(exc_type, exc_value, exc_traceback):
 def main():
     logger.info('Starting program...')
 
-    working_indices = (
+    working_indicators = (
         11,
         12,
         226,
         433,
     )
 
-    api = bcb_api.FinancialIndicesApi()
-    expander = indices_expander.IndicesExpander()
-    workbook = excel_writer.IndicesWorkbook(
+    api = bcb_api.FinancialIndicatorsApi()
+    expander = indicators_expander.IndicatorExpander()
+    workbook = excel_writer.IndicatorsWorkbook(
         path_to_file=utils.bundle_dir,
-        filename='financial-indices.xlsx'
+        filename='financial-indicators.xlsx'
     )
 
-    updated_indices = False  # was any indices updated?
-    for indices_code in working_indices:
-        wb_last_date = workbook.get_last_indices_date(indices_code)
-        api.set_indices_records({indices_code: (wb_last_date, None)})
-        api_last_date = api.get_latest_date(indices_code)
+    need_update = False  # was any indicator updated?
+    for indicator_code in working_indicators:
+        wb_last_date = workbook.get_indicator_last_date(indicator_code)
+        api.set_indicators_records({indicator_code: (wb_last_date, None)})
+        api_last_date = api.get_latest_date(indicator_code)
 
         if wb_last_date == api_last_date:
-            logger.info(f'Indices code {indices_code} is up-to-date')
+            logger.info(f'indicator code {indicator_code} is up-to-date')
             continue
         else:
-            logger.info(f'Updating Indices code {indices_code}')
-            updated_indices = True
-            expanded_indices = expander.get_expanded_indices(
-                indices_code, api[indices_code]
+            logger.info(f'Updating indicator code {indicator_code}')
+            need_update = True
+            expanded_indicator = expander.get_expanded_indicators(
+                indicator_code, api[indicator_code]
             )
-            workbook.write_records(indices_code,
-                                   expanded_indices,
+            workbook.write_records(indicator_code,
+                                   expanded_indicator,
                                    api_last_date)
 
-    if updated_indices:
+    if need_update:
         workbook.save()
 
 
