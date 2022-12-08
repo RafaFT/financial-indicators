@@ -1,6 +1,6 @@
 -i https://pypi.org/simple
 altgraph==0.16.1
-certifi==2019.6.16
+certifi==2022.12.7
 chardet==3.0.4
 et-xmlfile==1.0.1
 future==0.17.1
